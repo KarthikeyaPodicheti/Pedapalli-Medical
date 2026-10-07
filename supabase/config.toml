@@ -1,0 +1,4 @@
+project_id = "petapali-medical"
+
+[functions.checkout]
+verify_jwt = false
