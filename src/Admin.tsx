@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { ArrowLeft, CheckCircle2, ClipboardList, Download, Edit3, FileSpreadsheet, LoaderCircle, LogOut, Package, Plus, Search, Settings, ShieldCheck, Upload, X } from 'lucide-react'
+import { ArrowLeft, CheckCircle as CheckCircle2, CircleNotch as LoaderCircle, ClipboardText as ClipboardList, DownloadSimple as Download, FileXls as FileSpreadsheet, GearSix as Settings, MagnifyingGlass as Search, Package, PencilSimple as Edit3, Plus, ShieldCheck, SignOut as LogOut, UploadSimple as Upload, X } from '@phosphor-icons/react'
 import { isDemo, saveProducts, supabase, updateOrder } from './api'
 import { initialSettings, money, sampleProducts } from './data'
 import { categories, type Order, type Product, type StoreSettings } from './types'
