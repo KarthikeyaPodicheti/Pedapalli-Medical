@@ -110,3 +110,9 @@ Add confirmed client answers here using this format:
 ## Launch-critical unresolved items
 
 Do not enable production ordering until legal identity, buyer verification, approved catalog, inventory reconciliation, batch/expiry responsibility, delivery rules, invoice workflow, policies, staff roles, notification providers, backups, pilot testing, and client sign-off are confirmed and recorded.
+
+## Engineering status — 9 October 2026
+
+- The repository now contains the authenticated B2B ordering foundation: buyer application/approval, protected catalog pricing, MOQ/step validation, atomic stock reservation, idempotency, reservation release, buyer-scoped records and staff order transitions.
+- Production remains intentionally disabled because no Supabase project/credentials or verified client operating data are available in the build environment.
+- At the next client meeting, prioritize legal identity, catalog spreadsheet, delivery/payment rules, billing/GST handoff, staff assignments, policies and launch sign-off. Record answers above before activation.

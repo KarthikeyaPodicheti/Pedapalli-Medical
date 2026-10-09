@@ -1,2 +1,2 @@
-sku,name,composition,strength,pack_size,manufacturer,category,price,stock,prescription_required,active
-EXAMPLE-001,Example medicine,Verify with pharmacist,500 mg,10 tablets,Example manufacturer,Medicines,25.50,20,true,true
+sku,name,composition,strength,pack_size,manufacturer,category,price,mrp,stock,wholesale_unit,units_per_case,minimum_order_quantity,quantity_step,regulatory_class,prescription_required,pharmacist_approved,active
+EXAMPLE-001,Example medicine,Verify with pharmacist,500 mg,10 tablets,Example manufacturer,Medicines,25.50,30.00,20,pack,10,5,5,General trade,true,true,true

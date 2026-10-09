@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { sampleProducts } from './data'
 import { customerErrors, importColumns, parseCsv, parsePrice, validateRows } from './validation'
 
-const valid=['PM-001','Paracetamol','Paracetamol','500 mg','10 tablets','Example Pharma','Medicines','12.35','15','false','true']
+const valid=['PM-001','Paracetamol','Paracetamol','500 mg','10 tablets','Example Pharma','Medicines','12.35','15.00','15','pack','10','5','5','General trade','false','true','true']
 describe('inventory imports',()=>{
   it('parses quoted commas, multiline cells and escaped quotes',()=>{
     expect(parseCsv('sku,name\r\nA,"one, two"\r\nB,"line\nnext ""quote"""')).toEqual([['sku','name'],['A','one, two'],['B','line\nnext "quote"']])
@@ -20,13 +20,13 @@ describe('inventory imports',()=>{
     expect(result.errors.join(' ')).toContain('duplicate SKU')
   })
   it('rejects fractional stock, missing headers and formula-like price cells',()=>{
-    expect(validateRows([importColumns,[...valid.slice(0,8),'1.2','false','true']],[]).errors.length).toBe(1)
+    const fractional=[...valid];fractional[9]='1.2';expect(validateRows([importColumns,fractional],[]).errors.length).toBe(1)
     expect(validateRows([importColumns.slice(1),valid.slice(1)],[]).errors.length).toBe(1)
     const row=[...valid];row[7]='=1+2';expect(validateRows([importColumns,row],[]).errors.length).toBe(1)
   })
   it('accepts an empty stock value only when explicitly set to zero',()=>{
-    const row=[...valid];row[8]='';expect(validateRows([importColumns,row],[]).errors.length).toBe(1)
-    row[8]='0';expect(validateRows([importColumns,row],[]).products[0].stock).toBe(0)
+    const row=[...valid];row[9]='';expect(validateRows([importColumns,row],[]).errors.length).toBe(1)
+    row[9]='0';expect(validateRows([importColumns,row],[]).products[0].stock).toBe(0)
   })
   it('rejects oversized imports',()=>expect(validateRows([importColumns,...Array.from({length:501},()=>valid)],[]).errors).toEqual(['Import a maximum of 500 products at a time.']))
 })

@@ -14,7 +14,7 @@ export function customerErrors(customer: Customer): string[] {
   if (!/^[1-9]\d{5}$/.test(customer.pincode)) errors.push('Enter a valid 6-digit PIN code.')
   return errors
 }
-export const importColumns = ['sku','name','composition','strength','pack_size','manufacturer','category','price','stock','prescription_required','active']
+export const importColumns = ['sku','name','composition','strength','pack_size','manufacturer','category','price','mrp','stock','wholesale_unit','units_per_case','minimum_order_quantity','quantity_step','regulatory_class','prescription_required','pharmacist_approved','active']
 export interface ImportPreview { products: Product[]; errors: string[]; creates: number; updates: number }
 export function validateRows(rows: string[][], existing: Product[]): ImportPreview {
   const result: ImportPreview = { products:[], errors:[], creates:0, updates:0 }
@@ -38,12 +38,17 @@ export function validateRows(rows: string[][], existing: Product[]): ImportPrevi
     if (!categories.includes(row.category as Product['category'])) errors.push('unknown category')
     const price = parsePrice(row.price)
     if (price === null || price <= 0) errors.push('price must be positive rupees with at most 2 decimal places')
-    if (!/^\d{1,6}$/.test(row.stock)) errors.push('stock must be a nonnegative whole number up to 999999')
-    for (const key of ['prescription_required','active']) if (!['true','false'].includes(row[key].toLowerCase())) errors.push(`${key} must be true or false`)
+    const mrp = parsePrice(row.mrp)
+    if (mrp === null || mrp <= 0) errors.push('mrp must be positive rupees with at most 2 decimal places')
+    for (const key of ['stock','units_per_case','minimum_order_quantity','quantity_step']) if (!/^\d{1,6}$/.test(row[key])) errors.push(`${key} must be a nonnegative whole number up to 999999`)
+    if(Number(row.units_per_case)<1||Number(row.minimum_order_quantity)<1||Number(row.quantity_step)<1)errors.push('case size, MOQ and quantity step must be at least 1')
+    if(!row.wholesale_unit||row.wholesale_unit.length>40)errors.push('wholesale_unit is required (max 40 characters)')
+    if(!row.regulatory_class||row.regulatory_class.length>80)errors.push('regulatory_class is required (max 80 characters)')
+    for (const key of ['prescription_required','pharmacist_approved','active']) if (!['true','false'].includes(row[key].toLowerCase())) errors.push(`${key} must be true or false`)
     if (errors.length) { result.errors.push(`${label}: ${errors.join('; ')}.`); return }
     const old = existing.find(p => p.sku.toUpperCase() === sku)
     if (old) result.updates++; else result.creates++
-    result.products.push({id:old?.id || crypto.randomUUID(),sku,name:row.name,composition:row.composition,strength:row.strength,pack_size:row.pack_size,manufacturer:row.manufacturer,category:row.category as Product['category'],price_paise:price!,stock:Number(row.stock),prescription_required:row.prescription_required.toLowerCase()==='true',active:row.active.toLowerCase()==='true',version:old?.version || 0})
+    result.products.push({id:old?.id || crypto.randomUUID(),sku,name:row.name,composition:row.composition,strength:row.strength,pack_size:row.pack_size,manufacturer:row.manufacturer,category:row.category as Product['category'],price_paise:price!,mrp_paise:mrp!,stock:Number(row.stock),wholesale_unit:row.wholesale_unit,units_per_case:Number(row.units_per_case),minimum_order_quantity:Number(row.minimum_order_quantity),quantity_step:Number(row.quantity_step),regulatory_class:row.regulatory_class,prescription_required:row.prescription_required.toLowerCase()==='true',pharmacist_approved:row.pharmacist_approved.toLowerCase()==='true',active:row.active.toLowerCase()==='true',version:old?.version || 0})
   })
   if (!result.products.length && !result.errors.length) result.errors.push('No product rows found.')
   return result

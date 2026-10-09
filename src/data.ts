@@ -27,5 +27,5 @@ export const sampleProducts: Product[] = rows.map((p, i) => {
     regulatory_class: p[8] ? 'Licensed sale' : 'General trade', pharmacist_approved:true,
   }
 })
-export const initialSettings: StoreSettings = { store_name:'Pedapalli Medical', checkout_enabled:false, serviceable_pincodes:[], delivery_fee_paise:0, minimum_order_paise:0 }
+export const initialSettings: StoreSettings = { store_name:'Pedapalli Medical', checkout_enabled:false, serviceable_pincodes:[], delivery_fee_paise:0, minimum_order_paise:0, allowed_payment_methods:['cod','bank_transfer'], allowed_fulfilment_methods:['own_delivery','transporter','pickup'], reservation_minutes:1440, order_confirmation_notice:'Awaiting wholesaler confirmation.' }
 export const money = (paise: number) => new Intl.NumberFormat('en-IN', { style:'currency', currency:'INR', maximumFractionDigits: paise % 100 ? 2 : 0 }).format(paise / 100)

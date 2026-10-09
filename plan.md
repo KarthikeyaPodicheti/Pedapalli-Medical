@@ -256,3 +256,10 @@ Do not enable real B2B ordering until all of these are evidenced:
 - Final cancellation, returns, damaged/short shipment, payment verification, privacy, and retention policies.
 
 Until these decisions and the production gates are complete, keep the existing deployment in explicit demo mode and do not accept real business orders or real buyer data.
+
+## 15. Implementation status — 9 October 2026
+
+- Completed in the repository: responsive B2B storefront; email-link buyer authentication; GSTIN/drug-licence application; staff approval/suspension; price and stock redaction; pharmacist-approved catalog gating; wholesale units, case sizes, MOQ and steps; validated bulk import; server-authoritative COD/bank-transfer order requests; delivery/transporter/pickup selection; deterministic stock locking; idempotency; reservation expiry release; buyer-isolated RLS; staff transitions; and audit events.
+- Verified: TypeScript production build, unit tests, desktop/mobile browser tests, and both database migrations against PostgreSQL, including application, approval, order creation, idempotent retry, cancellation and exact stock release.
+- Not yet activated: staging/production Supabase projects, real client data, staff accounts/MFA, email/WhatsApp notifications, billing handoff, policies, monitoring/backups, custom domain, controlled pilot and client/compliance sign-off.
+- Activation procedure: follow `PRODUCTION.md`; keep `checkout_enabled=false` until every applicable production acceptance gate is evidenced.
