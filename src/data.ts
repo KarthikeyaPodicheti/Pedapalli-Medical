@@ -14,6 +14,18 @@ const rows: [string, string, string, string, string, Product['category'], number
   ['Blood pressure monitor', 'Upper-arm digital monitor', '', '1 device', 'Example Health', 'Health devices', 149900, 0, false],
   ['Aloe vera gel', 'Aloe vera gel', '', '100 g tube', 'Example Botanicals', 'Ayurveda', 9900, 10, false],
 ]
-export const sampleProducts: Product[] = rows.map((p, i) => ({ id: `demo-${i+1}`, sku: `PM-${String(i+1).padStart(3, '0')}`, name:p[0], composition:p[1], strength:p[2], pack_size:p[3], manufacturer:p[4], category:p[5], price_paise:p[6], stock:p[7], prescription_required:p[8], active:true, version:1 }))
-export const initialSettings: StoreSettings = { store_name:'Petapali Medical', checkout_enabled:false, serviceable_pincodes:[], delivery_fee_paise:0, minimum_order_paise:0 }
+export const sampleProducts: Product[] = rows.map((p, i) => {
+  const device = p[5] === 'Health devices'
+  const step = device ? 1 : 5
+  return {
+    id: `demo-${i+1}`, sku: `PM-${String(i+1).padStart(3, '0')}`, name:p[0], composition:p[1], strength:p[2],
+    pack_size:p[3], manufacturer:p[4], category:p[5], price_paise:p[6], stock:p[7],
+    prescription_required:p[8], active:true, version:1,
+    mrp_paise: Math.ceil(p[6] * 1.24 / 100) * 100,
+    wholesale_unit: device ? 'device' : 'pack', units_per_case: device ? 1 : 10,
+    minimum_order_quantity: step, quantity_step: step,
+    regulatory_class: p[8] ? 'Licensed sale' : 'General trade', pharmacist_approved:true,
+  }
+})
+export const initialSettings: StoreSettings = { store_name:'Pedapalli Medical', checkout_enabled:false, serviceable_pincodes:[], delivery_fee_paise:0, minimum_order_paise:0 }
 export const money = (paise: number) => new Intl.NumberFormat('en-IN', { style:'currency', currency:'INR', maximumFractionDigits: paise % 100 ? 2 : 0 }).format(paise / 100)

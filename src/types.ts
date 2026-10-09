@@ -4,6 +4,9 @@ export interface Product {
   id: string; sku: string; name: string; composition: string; strength: string; pack_size: string;
   manufacturer: string; category: Category; price_paise: number; stock: number;
   prescription_required: boolean; active: boolean; version: number;
+  mrp_paise?: number; wholesale_unit?: string; units_per_case?: number;
+  minimum_order_quantity?: number; quantity_step?: number;
+  regulatory_class?: string; pharmacist_approved?: boolean;
 }
 export interface CartItem { productId: string; quantity: number }
 export interface Customer { name: string; phone: string; address: string; locality: string; pincode: string }
