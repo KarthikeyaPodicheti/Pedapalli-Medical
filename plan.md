@@ -1,93 +1,258 @@
-# Peddapalli Medical Store Website — Build Plan
+# Peddapalli Pharmaceutical Wholesale Portal — Production Plan
 
-## Goal and current status
+## 1. Product goal
 
-Build a mobile-first ordering website for one medical store serving Peddapalli/Pedapalli, Telangana. Customers can browse a public medicine catalog, check availability, and submit cash-on-delivery order requests. Staff can securely maintain inventory and manage incoming orders.
+Build a production-ready B2B ordering portal for one pharmaceutical wholesaler in Peddapalli, Telangana. Approved medical stores will use it to browse a verified wholesale catalog, check availability, order in valid wholesale quantities, choose an offline payment method, and track fulfilment.
 
-The GitHub repository is [KarthikeyaPodicheti/Pedapalli-Medical](https://github.com/KarthikeyaPodicheti/Pedapalli-Medical), verified private. The MVP frontend, admin interface, Supabase migration and checkout function, tests, and GitHub workflows are implemented in the repository. The hosted backend and real store configuration are not yet provisioned, so the application remains in explicit demo mode. The displayed store name is **Peddapalli Pharmacy** provisionally; the actual licensed business name is still to be confirmed.
+This is a B2B-first product. Individual consumers, consumer prescriptions, retail checkout, and B2C delivery are explicitly deferred to a later phase. The current deployed storefront is a demonstration and must remain clearly labelled as such until every launch gate in this plan is satisfied.
 
-This plan separates a working demonstration from a real ordering service. Demo checkout must plainly say that no order was sent to the store. Real orders must remain disabled until the backend, store settings, catalog, and operating procedures are configured and verified.
+The commercial goal is a reliable product that can be sold to the client, configured for the client’s real business, and operated safely in production—not merely a visual prototype.
 
-## Customer experience
+## 2. Confirmed business decisions
 
-The public storefront will use a clean green-and-white pharmacy style based on the supplied reference description: a slim dark-green information strip, pharmacy identity and search in the header, a visible cart, horizontal category navigation, a pale mint promotional/healthcare banner, category shortcuts, product cards, and a simple footer. It will not include invented reviews, customer counts, discounts, contact details, licensing claims, delivery promises, Google/dealer login, or prescription upload.
+- Buyers are medical stores and other eligible medicine-retail businesses.
+- Wholesale prices and ordering are available only to approved buyer accounts.
+- Registration collects business details, GSTIN, and drug-licence numbers. Verification happens outside the website initially; document upload is not required in version one.
+- Staff must approve the buyer before catalog prices and ordering unlock.
+- Version one uses fixed wholesale pricing rather than negotiated or buyer-tier pricing.
+- Each product defines its wholesale unit, units per case where relevant, minimum order quantity, and allowed quantity step.
+- Initial payments are COD or bank transfer. There is no online gateway or credit-account ledger in version one.
+- Every submitted order is a request pending wholesaler confirmation.
+- Fulfilment supports configurable own delivery, transporter delivery, and store pickup.
+- Inventory and price updates start with validated Excel/CSV imports and staff reconciliation.
+- Only a responsible-pharmacist-approved catalog may be published or ordered.
+- Order and account notifications use transactional email plus an approved WhatsApp provider.
+- Exact legal branding, licences, contact details, delivery rules, and service areas will be collected from the client.
+- The GST invoice workflow will be decided after reviewing the client’s existing billing process. Export to an existing billing system is the preferred first option.
 
-Customer journey:
+## 3. Product experience
 
-1. Browse categories or search by medicine name, brand, or composition when catalog data is available.
-2. Open a product detail view showing name, strength/composition, dosage form, pack size, manufacturer/brand, INR price, availability, and prescription-required status where applicable.
-3. Add only available products to a cart. Change quantities or remove items; quantities cannot exceed current available stock. Out-of-stock products remain visible and cannot be added.
-4. Check out as a guest with customer name, mobile number, and delivery address. Show COD as the payment method, validate the configured delivery area and minimum, and show the server-calculated total before submission.
-5. On successful submission, show a unique order reference and the actual state, initially **Awaiting store confirmation**. Do not say an order is confirmed until staff confirms it.
+### Public experience
 
-Planned customer views are the storefront/home and category/search results, product details, cart, guest checkout, and order confirmation/status. The cart may be stored in browser storage; customer details and orders must not be stored there as the order system of record. Cart contents must be refreshed against current price and stock before checkout.
+The public site explains the wholesaler, service area, product categories, buyer benefits, verification process, and contact route. It may show general catalog categories, but wholesale prices, detailed availability, and ordering stay locked until buyer approval.
 
-## Staff experience
+Public actions:
 
-Staff use a sign-in page backed by hosted authentication. There is no public staff registration, shared client-side password, or security based on hiding an admin URL. Staff can search/filter inventory; add and edit products, prices, stock, and prescription flags; deactivate products without deleting historical records; review orders and update their states; and configure delivery settings.
+1. Learn about the wholesaler and B2B service.
+2. Register a medical-store business.
+3. Sign in.
+4. Check application status or contact support.
 
-The inventory import view will provide a downloadable CSV template, upload, validation, a preview of additions/updates/rejections, row-level error details, and an explicit apply step. The template headers are `sku,name,category,brand,composition,strength,dosage_form,pack_size,price_inr,stock_quantity,prescription_required,active`. SKU, name, category, price, quantity, prescription flag, and active flag are required. Descriptive fields may be blank. SKU is the stable product identifier: existing rows update by SKU, new SKUs create products, duplicate SKUs in one file are rejected, and missing SKUs never cause name-based matching. Rows absent from an import do not delete or deactivate products.
+### Buyer onboarding and approval
 
-Prices must be valid nonnegative INR amounts and quantities nonnegative whole numbers. Boolean fields accept only documented true/false values. Validation also checks duplicate rows, required values, and stock edits that would put on-hand quantity below already reserved quantity. Preview labels each row as create, update, or reject and shows the proposed values. On confirmation, valid rows apply together in one database transaction; rejected rows remain unchanged and are reported. If the transaction fails, none of the valid rows are applied. Each import records who applied it, when, and its row outcomes.
+Registration collects:
 
-## Architecture and hosting
+- Legal business/trading name.
+- Proprietor or authorized-contact name.
+- Business email and verified Indian mobile number.
+- GSTIN.
+- Retail/wholesale drug-licence number or numbers and expiry dates where applicable.
+- Billing and shipping addresses.
+- Preferred fulfilment method.
+- Agreement to business terms and privacy notice.
 
-Use **React, TypeScript, and Vite** for a static storefront and staff interface. This is a practical fit for a responsive shopping UI and the requested GitHub Pages hosting. Use **Supabase** as the proposed hosted backend for PostgreSQL, staff authentication, row-level security (RLS), and Edge Functions. No Supabase project or credentials are currently configured; this choice should be revisited only if an existing business backend is discovered.
+Account states are `submitted`, `under_review`, `approved`, `rejected`, `suspended`, and `expired`. Only approved, non-expired accounts may view wholesale prices or submit orders. Approval records who reviewed the account, when, and any internal reason. Licence expiry must trigger alerts and prevent ordering after the configured grace policy.
 
-GitHub Pages serves the built frontend only. It does not host the database, private staff authorization, or transactional order logic. Configure the Vite base path for `/<repository-name>/` and use hash-based client routing so direct navigation works on project Pages without server rewrite support. The frontend may contain the Supabase public/anon key only when RLS is correctly enforced. Service-role and other privileged credentials stay in backend secrets and never enter the bundle or repository. Add `.env.example` with names and explanations, no real values.
+### Approved buyer journey
 
-The repo is private. GitHub’s current documentation says Pages is available from public repositories on GitHub Free and from private repositories on Pro, Team, or Enterprise plans. A Pages site built from a private repository is still publicly available on plans that permit it; private source does not make the store website private. The authenticated account plan was not exposed by the GitHub API, and Pages is not configured on the repo, so eligibility remains unverified. Before deployment, confirm the account plan and Pages settings. If private-repository Pages is unavailable, keep the repository private and ask the owner to choose a supported hosting/visibility option; do not make it public silently. References: [GitHub Pages availability](https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site), [GitHub Pages and custom domains](https://docs.github.com/en/pages/configuring-a-custom-domain-for-github-pages/about-custom-domains-and-github-pages).
+1. Sign in and view the wholesale catalog.
+2. Search by product name, brand/manufacturer, composition, SKU, or category.
+3. See verified product identity, pack/case details, wholesale price, MRP where appropriate, MOQ, quantity step, availability, and fulfilment restrictions.
+4. Add quantities that satisfy MOQ and step rules.
+5. Review subtotal, tax presentation when decided, fulfilment method, delivery/freight treatment, and payment method.
+6. Submit the order request with an idempotency key.
+7. Receive a reference and an honest `Awaiting wholesaler confirmation` state.
+8. Receive email and WhatsApp updates and view order history/status in the portal.
+9. Reorder from a previous confirmed order, subject to current price, stock, MOQ, and buyer eligibility.
 
-Provide two deliberate modes. **Demo mode** uses synthetic sample products and clearly marked demo data; checkout can demonstrate field validation and cart totals but must explicitly state no order was transmitted. **Connected mode** requires configured backend endpoints and must fail closed if they are missing. Real customer orders are accepted only through the connected backend.
+### Staff experience and roles
 
-## Data model and access control
+- **Owner/admin:** staff access, buyer approval policy, store settings, integrations, and all reports.
+- **Sales:** buyer review, order review, customer support, confirmation, and rejection.
+- **Inventory:** catalog, price, MOQ, stock imports, reconciliation, batch/expiry visibility, and availability.
+- **Dispatch:** packing, fulfilment method, transporter/reference information, dispatch, and completion.
+- **Pharmacist/compliance:** catalog eligibility, regulatory classification, licence review outcome, and restricted-product approval.
 
-Initial PostgreSQL tables:
+The backend—not just the interface—must enforce these permissions.
 
-- `products`: immutable UUID, unique SKU, name, category, brand/manufacturer, composition, strength, dosage form, pack size, integer price in paise, on-hand quantity, reserved quantity, prescription-required flag, active flag, optional image reference, and timestamps.
-- `orders`: UUID, customer-facing unique reference, customer name/mobile/address, order state, COD method, item/subtotal/delivery/total snapshots in paise, idempotency key, reservation expiry, timestamps, and state-change metadata.
-- `order_items`: order and product references plus immutable SKU, product name, pack/strength description, prescription flag, unit-price snapshot, and quantity.
-- `staff_profiles`: Supabase user ID and assigned role (owner or staff); role changes are owner-controlled.
-- `delivery_settings`: enabled service area/pincodes, delivery charge, minimum order, and reservation duration. Defaults do not promise service: with no verified coverage configured, real checkout is disabled.
-- `inventory_imports` and `inventory_import_rows`: import audit metadata and row outcomes. Add an inventory movement/audit table for staff stock corrections and order reservation/release/fulfilment events.
+## 4. Catalog and inventory
 
-Public access is limited to active catalog fields needed by the storefront. RLS denies anonymous access to customer/order data and all staff mutations. Staff permissions are checked against authenticated backend roles and enforced by the database/functions, not only by frontend route guards. Do not collect or store medical history. Protect mobile numbers, addresses, and order history through least-privilege policies and a documented retention/backup policy before launch.
+Each product should support:
 
-## Order and inventory lifecycle
+- Stable product/SKU identifier.
+- Product and brand name.
+- Manufacturer, composition, strength, and dosage form.
+- Pack description, wholesale unit, units per case, MOQ, and quantity step.
+- MRP and fixed wholesale price in integer paise.
+- HSN code and GST/tax classification when the invoice workflow requires them.
+- Regulatory/schedule classification and pharmacist approval status.
+- Active, blocked, and orderable states.
+- Available stock and inventory freshness timestamp.
+- Optional licensed product image.
 
-Order submission goes through a server-side Edge Function and a single transactional database operation. The backend validates fields and serviceability, reloads current prices, validates quantities, calculates all totals in integer paise, checks available stock (`on_hand - reserved`), and applies an idempotency key to prevent duplicate submissions. If any line fails, no order or reservation is committed. On success, create the order and snapshots and reserve every line atomically. Return the order reference and its real state.
+The operational source of truth must also account for batch number, expiry date, batch quantity, blocked/recalled batches, and FEFO handling. If the website does not own batch data, the client’s existing inventory system must enforce it and expose only safe available quantities to the portal.
 
-New orders are **Awaiting store confirmation**. Staff may confirm, reject, prepare, mark out for delivery, deliver, or cancel according to allowed transitions. Reservation release is an idempotent state transition: rejection, cancellation, or expiry releases a reservation exactly once; delivery converts reserved quantity into fulfilled/on-hand reduction exactly once. Configure a 24-hour default reservation expiry, adjustable by the owner; show expiring orders to staff and provide a scheduled backend job to expire and release them. Staff stock edits and imports cannot reduce on-hand quantity below outstanding reservations. All transitions and stock movements are auditable.
+### Excel/CSV workflow
 
-Orders containing prescription-required products are booking requests, not dispensing authorization. Do not request prescription uploads. The website gives no dosage advice or substitution recommendations. Where applicable, a pharmacist reviews the request outside the website before dispensing. Staff record the out-of-band review outcome and reviewer identity in the order workflow; fulfillment of such items is blocked until review is recorded as verified. Applicable legal and operating requirements, including what review record is appropriate, must be confirmed by the responsible pharmacist before real launch.
+Version one may use spreadsheet imports, but it must behave like a controlled business process:
 
-## Delivery and business settings
+- Downloadable, versioned template.
+- Maximum file size and row limits.
+- Stable SKU matching; no name-based silent matching.
+- Strict field, price, quantity, MOQ, and category validation.
+- Preview of creates, updates, blocked rows, and errors.
+- Atomic confirmation: either the accepted batch applies completely or none of it does.
+- Optimistic version/conflict checking.
+- Audit record containing uploader, timestamps, source-file checksum, row outcomes, and before/after values.
+- Reconciliation status and `inventory last updated` visibility.
+- A documented schedule for reconciling website stock with counter, phone, and field-sales orders.
 
-Delivery coverage, charge, minimum order, store contact/hours, licensed business name, pharmacist details, product catalog, prices, inventory, and product imagery are not yet confirmed. Keep coverage and charges configurable and do not invent values. Coverage should use an owner-maintained list of supported postal codes or areas; if no area is configured, disable real checkout rather than imply serviceability. Display contact and hours only after the store supplies verified details. Decide expiry/batch tracking with the pharmacist before launch; it is outside the initial catalog model until requirements are confirmed.
+Before launch, confirm whether the client’s billing/POS/ERP system can replace spreadsheet imports with an automated integration.
 
-## Implementation milestones
+## 5. Pricing, orders, payment, and fulfilment
 
-1. **Foundation and demo storefront:** initialize the frontend, repository documentation, design tokens, responsive shell, search/category navigation, synthetic catalog, product detail, out-of-stock behavior, cart, and explicit demo checkout.
-2. **Backend foundation:** provision Supabase outside the repository, add schema/migrations, RLS, staff roles, secure environment setup, and server-side catalog/order functions.
-3. **Real checkout and lifecycle:** implement server-authoritative totals, idempotent transactional order creation, stock reservation/release/fulfilment, order confirmation/status views, and out-of-band pharmacist review gate.
-4. **Staff tools:** implement secure sign-in, inventory CRUD/search, deactivation/history behavior, order management, delivery settings, and audited CSV preview/apply flow.
-5. **Deployment and launch readiness:** build/deploy the static site using Pages base-path configuration if the private repository/account plan permits; otherwise pause for an explicit hosting/visibility decision. Add setup and operations documentation, environment examples, and complete the launch checklist before accepting real orders.
+- Server-side code is authoritative for buyer eligibility, current price, MOQ, quantity step, availability, tax inputs, freight, and totals.
+- Client-submitted prices, discounts, eligibility flags, and statuses are never trusted.
+- Order creation locks requested inventory deterministically and prevents overselling.
+- Idempotency prevents retry duplication.
+- Reservations expire automatically if the wholesaler does not confirm them within the configured window; stock is released exactly once.
+- Staff can confirm, reject, pack, mark ready for pickup, assign transporter/delivery details, dispatch, complete, or cancel only through allowed transitions.
+- Every order-state transition is recorded in an immutable audit history.
+- COD and bank-transfer orders record the selected method. Bank transfer may record a reference and staff verification, but version one does not automatically settle or reconcile a bank account.
+- Fulfilment rules support pickup, own delivery, and transporter delivery. Serviceability, freight responsibility, minimum order value, and cut-off times remain configurable.
+- Buyer notifications are event-driven and recorded so failed email/WhatsApp delivery can be retried.
 
-## Acceptance checks
+## 6. GST invoicing decision
 
-- Search matches name, brand, and composition; category filters work on mobile and desktop.
-- Out-of-stock items remain visible, are clearly labeled, and cannot be added. Cart edits/removal work, stock limits are enforced, and current server prices replace stale browser totals.
-- Checkout validates name, Indian mobile number, address, configured delivery coverage, and minimum order. Demo mode plainly says no order was sent. Connected mode returns a unique reference and correct initial status.
-- Concurrent submissions for the last units cannot oversell. Repeated submission with the same idempotency key creates one order. Rejected/cancelled/expired orders release stock once; delivered orders decrement on-hand once.
-- Anonymous users cannot view or mutate orders, customer details, or inventory. Unauthorized staff roles cannot perform owner-only actions. Staff can edit price/quantity and deactivate products while old order snapshots remain intact.
-- CSV template downloads; invalid prices, quantities, IDs/SKUs, duplicate rows, and reserved-stock conflicts are reported before apply. Valid rows are previewed; confirmation applies the valid batch atomically; failed commits change nothing.
-- Prescription orders require a recorded pharmacist verification before fulfillment, with no upload control or automated medical advice.
-- Mobile layouts have readable product details, large touch controls, one-column checkout and import review, keyboard navigation, visible focus, sufficient contrast, and no horizontal overflow.
-- Production build loads assets from the Pages project base path and hash routes work on refresh/direct links.
-- Deployment check confirms the site is reachable and public by design, repo remains private, and no secrets or real customer data are committed.
+Production launch requires a confirmed invoice workflow.
 
-## Launch blockers and checklist
+Preferred version-one option:
 
-Before real orders are enabled: verify the business’s licensed name and contact details; obtain an approved product catalog with verified identifiers, pricing, availability, images, and prescription flags; configure delivery area/charges/minimum; provision and secure the hosted backend; create owner/staff accounts; confirm pharmacist review and applicable operating requirements; decide batch/expiry handling and privacy/retention procedures; test backup and recovery; confirm private-repository Pages eligibility or obtain an explicit alternative hosting/visibility decision; and complete a real-device checkout and staff workflow review.
+1. Staff confirms an order.
+2. The portal exports a clean order payload/CSV/PDF summary for the client’s existing billing software.
+3. The official GST invoice is created in that system.
+4. The portal records the external invoice number and optionally stores or links the final PDF.
 
-Until those items are complete, use synthetic data, label the site as a demonstration, and do not accept or claim to transmit real orders.
+If the client requires website-generated invoices, scope must expand to cover invoice sequences, supplier and buyer GST details, HSN and tax rates, intra/inter-state tax handling, rounding, PDFs, cancellations, credit/debit notes, immutable audit records, and accountant/legal validation. Do not implement or claim compliant GST invoicing until this decision and its rules are confirmed.
+
+## 7. Proposed architecture
+
+- **Frontend:** React, TypeScript, and Vite with mobile-first responsive design.
+- **Hosting:** GitHub Pages may host the static frontend; use a custom domain before commercial launch if the client approves.
+- **Backend:** Supabase PostgreSQL, Auth, Row Level Security, and Edge Functions.
+- **Abuse protection:** Cloudflare Turnstile or equivalent on registration and anonymous write endpoints.
+- **Notifications:** transactional email provider and approved WhatsApp Business API provider, called only from server functions.
+- **Environments:** separate staging and production Supabase projects, secrets, domains, notification credentials, and data.
+- **Observability:** structured no-PII logs, error monitoring, uptime checks, failed-notification alerts, stale-order alerts, and inventory-import alerts.
+
+The current consumer-shaped schema must be migrated rather than switched on unchanged.
+
+### Core data model
+
+- `buyer_businesses`: identity, GSTIN, licence numbers/expiry, addresses, verification state, suspension state, timestamps.
+- `buyer_users`: authenticated users linked to a business with buyer-side roles.
+- `staff_members`: authenticated users with explicit operational roles.
+- `products`: verified catalog and wholesale-ordering fields.
+- `inventory_batches` or an external inventory reference: batch, expiry, quantity, blocked/recall status.
+- `inventory_imports` and `inventory_import_rows`: immutable import audit and row outcomes.
+- `store_settings`: ordering, fulfilment, payment, reservation, serviceability, and notification settings.
+- `orders`: buyer business, snapshot addresses, payment/fulfilment method, authoritative totals, reservation expiry, status, invoice reference, timestamps.
+- `order_items`: immutable SKU/name/pack/price/MOQ/tax snapshots.
+- `order_status_events`: actor, previous/next state, reason, timestamp.
+- `inventory_events`: all reservations, releases, adjustments, and fulfilment movements.
+- `notification_deliveries`: channel, template, destination reference, status, retries, provider reference, timestamp.
+- `audit_events`: sensitive approvals, access changes, setting changes, and exports.
+
+## 8. Security and privacy requirements
+
+- Prices and availability are not exposed to unapproved buyers.
+- RLS scopes buyer users to their own business and orders.
+- Operational roles are enforced in database functions and policies.
+- Staff MFA is required before production.
+- Authentication, registration, and write endpoints have rate limits and abuse protection.
+- Service-role keys, notification tokens, and provider credentials exist only in backend secrets.
+- GSTIN, licence information, contacts, addresses, and order history have a documented retention/deletion policy.
+- Logs and analytics do not contain raw business contact information, licences, addresses, or order contents.
+- Sensitive actions are auditable and export access is controlled.
+- Backups, point-in-time recovery where available, and a tested restore runbook are configured.
+- Dependencies, secrets, and source are scanned in CI; critical findings block release.
+- Production changes use reviewed migrations, deployment evidence, and a rollback plan.
+
+## 9. Regulatory and operational requirements
+
+A responsible pharmacist and qualified Indian legal/tax professionals must confirm the applicable wholesale sale, buyer-licence, product-classification, recordkeeping, GST, delivery, and data-protection requirements. Engineering must encode the approved process but must not invent it.
+
+At minimum, launch requires:
+
+- Verified wholesaler legal identity, licences, pharmacist/compliance owner, contact details, and service terms.
+- A defined buyer-licence verification and renewal process.
+- A pharmacist-approved catalog and restricted-product policy.
+- Batch/expiry/recall responsibility defined between the portal and existing inventory system.
+- Privacy policy, B2B terms, cancellation/return policy, fulfilment policy, and support/grievance contact.
+- Staff training for approval, inventory reconciliation, order confirmation, dispatch, cancellation, and incident handling.
+
+## 10. Design direction
+
+Use ApolloPharmacy.in only as a quality and usability reference: professional pharmacy trust signals, strong search, dense but readable catalog browsing, clear categories, polished cards, reliable responsive behavior, and obvious account/cart actions.
+
+Do not copy Apollo’s trademark, logo, written content, images, illustrations, exact component layout, or proprietary interaction patterns. The portal needs its own brand system using verified client details, licensed stock photography, Phosphor icons, accessible color contrast, keyboard support, and mobile-first layouts.
+
+## 11. Engineering and verification strategy
+
+Automated coverage must include:
+
+- Unit tests for pricing, MOQ/step rules, imports, GST inputs once defined, and validation.
+- Database tests for RLS, role boundaries, buyer isolation, transitions, idempotency, reservation expiry, inventory release, and concurrent last-stock orders.
+- Edge Function integration tests for origin checks, rate limits, Turnstile, malformed payloads, and provider failures.
+- End-to-end tests for registration, approval, sign-in, locked/unlocked catalog, wholesale cart, COD/bank-transfer order, status updates, inventory imports, and notifications.
+- Desktop and real-device mobile review with accessibility checks and no horizontal overflow.
+- Security review, production dependency audit, secret scan, and permission review.
+- Staging data migration, backup restore drill, notification-provider sandbox tests, and post-deployment smoke tests.
+- A small client pilot using verified synthetic or controlled products before general buyer onboarding.
+
+CI must block merge/deployment when tests, builds, audits, migrations, or required checks fail. Production deployment should be reproducible, observable, and reversible.
+
+## 12. Delivery phases
+
+1. **Client discovery and compliance:** collect legal brand details, sample spreadsheet, licence-verification procedure, billing workflow, delivery rules, policies, staff roles, and approved catalog rules.
+2. **B2B foundation:** redesign schema and navigation around buyer businesses, approval, authentication, locked pricing, RBAC, and audit history.
+3. **Wholesale catalog and inventory:** product-specific MOQ/steps, verified catalog, spreadsheet import/audit, freshness, reconciliation, and batch/expiry integration decision.
+4. **Ordering and fulfilment:** server-authoritative checkout, COD/bank transfer, reservations/expiry, order workflow, pickup/delivery/transporter options, and buyer order history.
+5. **Notifications and billing handoff:** email/WhatsApp, retries/audit, billing export, and invoice reference handling.
+6. **Hardening:** security, privacy, monitoring, backups, integration/concurrency tests, accessibility, performance, and operational runbooks.
+7. **Staging acceptance and pilot:** client sign-off, staff training, controlled pilot orders, issue resolution, restore test, and final launch review.
+8. **Production launch:** custom domain/configuration, verified production data, monitored rollout, and checkout enabled only after written acceptance.
+9. **Future B2C phase:** separately design consumer catalog, prescription intake, consumer payments, delivery, and compliance without weakening B2B isolation.
+
+## 13. Production acceptance gates
+
+Do not enable real B2B ordering until all of these are evidenced:
+
+- Client has approved exact business identity, branding, contacts, operating hours, and service area.
+- Compliance owner has approved buyer verification and the orderable catalog.
+- Invoice/billing handoff is confirmed and tested.
+- Staging and production backends are provisioned separately.
+- Buyer approval, authentication, RLS, and staff RBAC tests pass.
+- Real product fields, wholesale prices, MOQ/steps, and availability are verified.
+- Inventory reconciliation and batch/expiry responsibility are operational.
+- Reservation expiry and idempotent stock release are tested.
+- COD/bank transfer and all fulfilment paths are tested.
+- Email and WhatsApp delivery, retries, and failure alerts are tested.
+- Privacy, B2B terms, cancellation/return, and fulfilment policies are published.
+- Monitoring, backups, recovery, incident response, and staff access removal are tested.
+- No critical dependency or security findings remain.
+- Client staff complete training and controlled pilot orders successfully.
+- Final production smoke test passes and the client signs off before checkout is enabled.
+
+## 14. Open client-discovery items
+
+- Exact legal/trading name, logo, licences, pharmacist/compliance contact, support details, and domain.
+- Existing billing/POS/ERP software and available integration/export formats.
+- Official GST invoice owner and workflow.
+- Spreadsheet column structure, update frequency, and stock reconciliation owner.
+- Delivery PIN codes/areas, freight rules, pickup location, transporter process, order cut-off times, and minimum order value.
+- Buyer licence types, expiry/grace policy, rejection reasons, and periodic reverification.
+- Product regulatory classes and items excluded from online B2B ordering.
+- Final cancellation, returns, damaged/short shipment, payment verification, privacy, and retention policies.
+
+Until these decisions and the production gates are complete, keep the existing deployment in explicit demo mode and do not accept real business orders or real buyer data.
