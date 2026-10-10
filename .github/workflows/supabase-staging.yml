@@ -28,4 +28,5 @@ jobs:
       - name: Deploy Edge Functions
         run: |
           npx --yes supabase@2.120.0 functions deploy checkout --project-ref "$SUPABASE_PROJECT_REF"
+          npx --yes supabase@2.120.0 functions deploy buyer-application --project-ref "$SUPABASE_PROJECT_REF"
           npx --yes supabase@2.120.0 functions deploy maintenance --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt

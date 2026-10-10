@@ -11,10 +11,10 @@ export async function loadCatalog() {
   if (settings.error) throw settings.error
   return { products:products.data as Product[], settings:settings.data as StoreSettings }
 }
-export async function emailSignIn(email:string) {
+export async function emailSignIn(email:string,captchaToken='') {
   if(!supabase) throw new Error('Backend is not configured.')
   const redirect=`${location.origin}${import.meta.env.BASE_URL}`
-  const {error}=await supabase.auth.signInWithOtp({email,options:{emailRedirectTo:redirect}})
+  const {error}=await supabase.auth.signInWithOtp({email,options:{emailRedirectTo:redirect,captchaToken:captchaToken||undefined}})
   if(error) throw error
 }
 export async function signOutBuyer(){if(supabase){const {error}=await supabase.auth.signOut();if(error)throw error}}
@@ -26,8 +26,11 @@ export async function loadMyBuyer():Promise<BuyerBusiness|null>{
   if(error)throw error
   return data as BuyerBusiness|null
 }
-export async function submitBuyerApplication(application:Record<string,string>){
-  const {data,error}=await supabase!.rpc('submit_buyer_application',{application})
+export async function submitBuyerApplication(application:Record<string,string>,turnstileToken=''){
+  if(!supabase)throw new Error('Backend is not configured.')
+  if(!import.meta.env.VITE_TURNSTILE_SITE_KEY||!turnstileToken)throw new Error('Security verification is not configured.')
+  const result=await supabase.functions.invoke('buyer-application',{body:{application,turnstileToken}})
+  const {data,error}=result
   if(error)throw error
   return data as string
 }

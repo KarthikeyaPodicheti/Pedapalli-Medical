@@ -9,7 +9,9 @@
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run src",
     "test:e2e": "playwright test",
-    "test:db": "bash scripts/test-database.sh"
+    "test:db": "bash scripts/test-database.sh",
+    "deploy:cloudflare": "npm run build && wrangler deploy",
+    "verify:cloudflare": "npm run build && wrangler deploy --dry-run"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
@@ -26,7 +28,8 @@
     "@vitejs/plugin-react": "^4.7.0",
     "typescript": "~5.9.2",
     "vite": "^7.1.7",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "wrangler": "^4.45.0"
   },
   "overrides": {
     "exceljs": {

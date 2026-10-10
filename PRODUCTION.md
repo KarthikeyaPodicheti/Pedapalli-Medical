@@ -1,71 +1,86 @@
 # Production activation runbook
 
-The application code supports real authenticated B2B orders, but production must remain disabled until every item below is complete. Never enter real buyer or medicine data into the browser-only demo.
+The selected zero-cost pilot stack is Cloudflare Free + Supabase Free. It can accept controlled real orders only after every launch gate below passes. It has no uptime SLA and is not equivalent to a paid production platform.
 
-## 1. Provision isolated environments
+## 1. Provision staging and production
 
-Create separate Supabase projects for staging and production. In each project:
+Create separate Supabase projects. For each project:
 
-1. Apply `supabase/migrations/202610070001_store.sql` and then `202610090001_b2b_foundation.sql`.
-2. Enable email magic-link authentication and set the exact Site URL/redirect URLs.
-3. Create staff Auth users, enable MFA for them, and insert their user IDs and least-privilege roles into `staff_members`.
-4. Deploy the disabled legacy `checkout` function so no old anonymous checkout endpoint remains active.
-5. Schedule `select public.release_expired_b2b_orders();` at least every five minutes using Supabase Cron or an equivalent trusted scheduler.
-6. Enable backups/PITR appropriate to the client’s recovery requirement.
+1. Apply every migration in `supabase/migrations` in filename order.
+2. Enable email magic links, set the exact Site URL and allow only the Cloudflare production/staging callback URLs.
+3. Enable Supabase Auth CAPTCHA with the Cloudflare Turnstile secret. Never expose that secret in the frontend.
+4. Create staff Auth accounts, require MFA, and assign least-privilege `staff_members` roles.
+5. Deploy `checkout`, `buyer-application`, and `maintenance`. Keep legacy `checkout` disabled.
+6. Set Edge Function secrets: `TURNSTILE_SECRET_KEY`, exact comma-separated `ALLOWED_ORIGINS`, and `TURNSTILE_ALLOWED_HOSTNAMES`.
+7. Configure a real transactional email provider for Auth. Supabase’s default SMTP is not a production delivery service.
+8. Set maintenance secrets/providers and invoke `maintenance` at least every five minutes: `MAINTENANCE_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`, and optional approved WhatsApp credentials/templates.
 
-The repository includes a manual `Deploy Supabase Staging` GitHub Actions workflow. Configure a protected `staging` environment with:
+The manual `Deploy Supabase Staging` workflow needs a protected `staging` GitHub environment with variable `SUPABASE_PROJECT_REF` and secrets `SUPABASE_ACCESS_TOKEN` and `SUPABASE_DB_PASSWORD`.
 
-- Variable: `SUPABASE_PROJECT_REF`
-- Secrets: `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`
+## 2. Publish on Cloudflare Free
 
-Set these Supabase Edge Function secrets before running maintenance:
+Create a Cloudflare Turnstile widget for the final hostnames. In the protected `cloudflare-production` GitHub environment configure:
 
-- `MAINTENANCE_SECRET`
-- `RESEND_API_KEY` and `EMAIL_FROM`
-- `WHATSAPP_ACCESS_TOKEN` and `WHATSAPP_PHONE_NUMBER_ID`
-- One approved template variable per event, such as `WHATSAPP_TEMPLATE_ORDER_SUBMITTED`
+- Variables: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_TURNSTILE_SITE_KEY`.
+- Secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`.
 
-Call the `maintenance` function every five minutes using `Authorization: Bearer <MAINTENANCE_SECRET>`. It releases expired reservations, claims notification jobs with `SKIP LOCKED`, sends configured email/WhatsApp messages and records retryable failures. Never place the maintenance secret in frontend code.
+Give the API token only Workers Scripts edit permission for the intended account. Run `Publish Cloudflare Free`, connect the client domain, enforce HTTPS, and confirm the site says `SECURE B2B PORTAL` rather than `B2B PREVIEW`. The Supabase anon key is public by design; the service-role key must never enter GitHub build variables or browser code.
 
-## 2. Configure hosting
+For the scheduled health check, add repository variables `STOREFRONT_URL`, `VITE_SUPABASE_URL`, and `VITE_SUPABASE_ANON_KEY`. A failed run must alert the named operations owner through GitHub Actions notifications or an attached incident channel.
 
-Set these GitHub repository Actions variables separately for the intended backend:
+## 3. Encrypted backups on the free tier
 
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
+Create a private R2 bucket with no public access and a lifecycle rule that matches the client-approved retention period. Configure the protected `production-backup` environment:
 
-The anon key is intended for browser use; never expose the service-role key. After setting variables, run the Pages workflow and verify the site displays `SECURE B2B PORTAL`, not `B2B PREVIEW`.
+- Variable: `R2_BACKUP_BUCKET`.
+- Secrets: `SUPABASE_DB_URL`, `BACKUP_ENCRYPTION_PASSPHRASE`, `CLOUDFLARE_R2_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`.
 
-## 3. Configure the business
+The daily workflow dumps `public` schema/data and Auth data, encrypts the archive with AES-256, verifies it, and uploads it with a SHA-256 checksum. Store the passphrase in a separate client-controlled password manager. Once per month, download the latest archive, verify its checksum, decrypt it offline, restore into a disposable PostgreSQL/Supabase staging project, and record recovery time and evidence. Never test a restore against production.
+
+Supabase Free does not provide the same backup/PITR guarantees as paid plans. A backup that has not been restored successfully is not considered valid.
+
+## 4. Free-tier operating limits
+
+The owner must check Supabase and Cloudflare usage weekly. Start upgrade planning when any of these occurs:
+
+- Database reaches 400 MB or 80% of the current project limit.
+- Egress, Edge Function, Worker, Turnstile, Auth, storage or R2 usage reaches 80% of its current allowance.
+- The store cannot tolerate a Supabase inactivity pause, platform outage, delayed email, or manual recovery.
+- Order volume makes spreadsheet inventory reconciliation unsafe.
+- The client requires an uptime SLA, PITR, formal support, longer logs or faster recovery.
+
+Do not add a payment card or enable usage-based billing without client approval. Maintain a written fallback: staff phone/WhatsApp contact, read-only catalog message, paper/Excel order capture, and later reconciliation. Free-plan quotas and terms can change; verify the provider dashboards before launch and monthly thereafter.
+
+## 5. Configure the business
 
 Before enabling checkout, staff must:
 
-1. Replace sample branding and publish verified legal/contact information and approved policies.
-2. Import the pharmacist-approved real catalog using the current template. Confirm SKU, wholesale price, MRP, stock, unit, case size, MOQ, step and regulatory class.
-3. Configure payment methods, fulfilment methods, delivery PIN codes, fee and minimum order value.
-4. Verify the billing/GST handoff, batch/expiry responsibility and stock-reconciliation process.
-5. Keep `checkout_enabled=false` until controlled staging orders pass.
+1. Publish verified legal identity, contact information, policies and approved branding.
+2. Import the pharmacist-approved real catalog and verify SKU, price, MRP, stock, wholesale unit, case size, MOQ, step and regulatory class.
+3. Confirm payment methods, fulfilment methods, delivery PIN codes, fee, minimum order and manual fallback.
+4. Confirm GST/billing handoff, batch/expiry ownership, recall handling and daily stock reconciliation.
+5. Keep `checkout_enabled=false` until controlled staging and pilot orders pass.
 
-## 4. Acceptance test
+## 6. Acceptance and launch gates
 
-Run a staging pilot with synthetic or controlled records:
+Test with synthetic or controlled records:
 
-1. Buyer requests a secure email link and submits GSTIN/licence details.
-2. An unauthorized account cannot see price or stock and cannot create an order.
-3. Staff verifies and approves the buyer.
-4. The approved buyer sees current prices, adds only valid MOQ/step quantities, and submits COD and bank-transfer test orders across enabled fulfilment methods.
-5. Simultaneous orders cannot oversell stock; retrying the same idempotency key creates only one order.
-6. Staff accepts/cancels orders; cancellation and expiration restore stock exactly once.
-7. Buyer isolation and staff roles are tested, backups are restored, and staff completes the operating runbook.
+1. Turnstile protects sign-in and buyer application; direct browser invocation of the application SQL function is denied.
+2. An unapproved account cannot see prices/stock or order; staff approval unlocks only that buyer.
+3. MOQ/step, current price, service area, payment and fulfilment rules are enforced on the server.
+4. Concurrent last-stock orders cannot oversell; retries create one order.
+5. Cancellation and reservation expiry restore stock exactly once.
+6. Staff roles, MFA, buyer isolation, notification retries and audit records pass.
+7. The encrypted backup is restored successfully into a disposable environment.
+8. Mobile flows work on the client’s actual devices and network.
+9. Client/compliance owners approve the catalog, policies, fallback, training and launch in writing.
 
-Only after client/compliance sign-off should an owner enable `Accept online order requests` in Store settings.
-
-The same database suite used in CI can be run locally with `npm run test:db`. It creates an isolated PostgreSQL container and verifies migrations, RLS, role boundaries, price redaction, MOQ rules, idempotency, concurrent last-stock ordering, cancellation, expiration and notification claiming.
+Only then may an owner enable `Accept online order requests`. Run locally with `npm test`, `npm run build`, `npm run test:db`, `npm run test:e2e`, and `npm run verify:cloudflare`.
 
 ## Still required outside this repository
 
-- Client-approved legal identity, policies, GST/billing process, delivery rules and real catalog.
-- Production Supabase project, domain/email configuration, staff accounts and MFA.
-- Email and approved WhatsApp notification providers with delivery/retry monitoring.
-- Error monitoring, uptime alerts, inventory freshness alerts and incident ownership.
-- A custom domain, client pilot and written launch approval.
+- Supabase/Cloudflare accounts, custom domain and correctly scoped credentials.
+- Verified client legal data, catalog, operating rules and policies.
+- Production SMTP and any approved WhatsApp provider.
+- Named incident, inventory, security, backup and launch owners.
+- Controlled pilot evidence and written client/compliance sign-off.

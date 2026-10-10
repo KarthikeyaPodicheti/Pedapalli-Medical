@@ -2,7 +2,7 @@
 
 A mobile-first B2B pharmaceutical wholesale portal for verified medical stores. The preview includes gated wholesale pricing, GSTIN and drug-licence application, product-specific MOQ and order steps, wholesale cart and fulfilment choices, a buyer-review workspace, and CSV/XLSX inventory tools.
 
-Without Supabase environment variables, the deployed site is a safe product preview and applications/orders are not transmitted. With the reviewed migrations and Supabase configuration, it supports email-link authentication, buyer approval, protected pricing, server-authoritative ordering, stock reservation, order transitions and buyer-isolated records. Follow [PRODUCTION.md](PRODUCTION.md) before activation.
+Without Supabase environment variables, the site is a safe product preview and applications/orders are not transmitted. The selected ₹0 pilot architecture uses Cloudflare Workers Static Assets and Turnstile with Supabase Free for Postgres, Auth, RLS and Edge Functions. It supports email-link authentication, buyer approval, protected pricing, server-authoritative ordering, stock reservation, order transitions and buyer-isolated records. Follow [PRODUCTION.md](PRODUCTION.md) before activation.
 
 ## Local development
 
@@ -17,4 +17,7 @@ npm run dev
 npm test
 npm run build
 npm run test:e2e
+npm run verify:cloudflare
 ```
+
+Production publishing is intentionally manual through the `Publish Cloudflare Free` GitHub Actions workflow. Required setup, free-tier limits and backup/restore instructions are in [PRODUCTION.md](PRODUCTION.md).

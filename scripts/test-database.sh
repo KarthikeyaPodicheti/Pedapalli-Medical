@@ -20,6 +20,8 @@ docker exec -i "$container_name" psql -U postgres -v ON_ERROR_STOP=1 < "$repo_ro
 docker exec -i "$container_name" psql -U postgres -v ON_ERROR_STOP=1 < "$repo_root/supabase/migrations/202610070001_store.sql"
 docker exec -i "$container_name" psql -U postgres -v ON_ERROR_STOP=1 < "$repo_root/supabase/migrations/202610090001_b2b_foundation.sql"
 docker exec -i "$container_name" psql -U postgres -v ON_ERROR_STOP=1 < "$repo_root/supabase/tests/b2b_integration.sql"
+docker exec -i "$container_name" psql -U postgres -v ON_ERROR_STOP=1 < "$repo_root/supabase/migrations/202610100001_free_tier_security.sql"
+docker exec -i "$container_name" psql -U postgres -v ON_ERROR_STOP=1 < "$repo_root/supabase/tests/free_tier_security.sql"
 
 race_order() {
   local buyer_id="$1" request_id="$2"

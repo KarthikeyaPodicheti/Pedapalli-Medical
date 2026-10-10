@@ -85,6 +85,10 @@ Use this document during client meetings. Record exact answers, avoid assumption
 - [ ] Is staff MFA acceptable and who manages access removal?
 - [ ] Required reports, exports, and audit history?
 - [ ] Backup/recovery expectations and acceptable downtime?
+- [ ] Is the client accepting a monitored free-tier pilot that can pause or hit quotas, or is guaranteed availability required?
+- [ ] Who monitors usage/uptime, runs the manual fallback, and authorizes a paid upgrade when a trigger is reached?
+- [ ] What phone/WhatsApp/manual process should buyers use if the portal is unavailable?
+- [ ] How many days of encrypted backups must be retained, and who holds the recovery passphrase?
 - [ ] Who signs off staging, pilot orders, staff training, and final production launch?
 
 ## Decisions log
@@ -95,6 +99,7 @@ Add confirmed client answers here using this format:
 | --- | --- | --- | --- | --- |
 | Pending | GST invoicing | Awaiting client billing-workflow review | Production launch remains blocked | Identify current billing software |
 | Pending | Brand identity | Collect verified legal and public brand details | Continue using demo placeholders | Obtain logo and licence/contact details |
+| Pending | Hosting budget | Proposed Cloudflare Free + Supabase Free controlled pilot | No uptime SLA; strict quota and fallback controls required | Client must accept risk and upgrade triggers |
 
 ## Materials to request
 
@@ -115,4 +120,5 @@ Do not enable production ordering until legal identity, buyer verification, appr
 
 - The repository now contains the authenticated B2B ordering foundation: buyer application/approval, protected catalog pricing, MOQ/step validation, atomic stock reservation, idempotency, reservation release, buyer-scoped records and staff order transitions.
 - Production remains intentionally disabled because no Supabase project/credentials or verified client operating data are available in the build environment.
+- The free-tier implementation adds Cloudflare deployment, Turnstile-protected applications and encrypted database backups to private R2; the client must still approve downtime, retention and manual-fallback ownership.
 - At the next client meeting, prioritize legal identity, catalog spreadsheet, delivery/payment rules, billing/GST handoff, staff assignments, policies and launch sign-off. Record answers above before activation.
