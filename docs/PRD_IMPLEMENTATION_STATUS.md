@@ -22,3 +22,12 @@ This branch introduces the first **database-only** increment for PRD FR-021, FR-
 
 ## Review and validation
 Apply the new migration to a **disposable staging database** and test: receipt +5 twice yields +10, duplicate batch key does not duplicate rows, unauthorized writes fail, expired batches cannot be released, and staff-only summary excludes quarantined stock from sellable quantity. No tests have been executed in this change.
+
+## Phase 1b — shadow FEFO allocation rehearsal (2026-10-11)
+
+- Added `202610110002_shadow_batch_allocations.sql`: staff-private batch allocation rows and service-only allocation/release RPCs.
+- Existing order items can be allocated atomically to eligible batches in expiry order; any shortage aborts the entire transaction.
+- Added `supabase/tests/shadow_batch_allocations.sql` and connected both new migrations and test suites to `scripts/test-database.sh`.
+- This is **not live checkout integration**. Product-level stock and reservation/expiry/cancellation remain authoritative; shadow allocations must not be used for real picking or buyer stock display.
+- The rehearsal audit uses a designated owner account because the service actor is not a human; this attribution must be redesigned before production use.
+- **Not executed**: database suite and concurrent-race tests; local Docker/Postgres binaries are unavailable. PR remains draft.
