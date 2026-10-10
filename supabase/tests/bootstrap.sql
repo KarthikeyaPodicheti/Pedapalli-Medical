@@ -20,3 +20,8 @@ insert into auth.users(id,email) values
   ('44444444-4444-4444-8444-444444444444','inventory@example.in'),
   ('55555555-5555-4555-8555-555555555555','verified@example.in');
 
+
+-- Supabase Auth role helper used by service-only RPCs in local integration tests.
+create or replace function auth.role() returns text language sql stable as $$
+ select nullif(current_setting('request.jwt.claim.role',true),'');
+$$;
