@@ -28,6 +28,7 @@ describe('inventory imports',()=>{
     const row=[...valid];row[9]='';expect(validateRows([importColumns,row],[]).errors.length).toBe(1)
     row[9]='0';expect(validateRows([importColumns,row],[]).products[0].stock).toBe(0)
   })
+  it('rejects an MRP below the wholesale price',()=>{const row=[...valid];row[8]='10.00';expect(validateRows([importColumns,row],[]).errors.join(' ')).toContain('mrp cannot be lower')})
   it('rejects oversized imports',()=>expect(validateRows([importColumns,...Array.from({length:501},()=>valid)],[]).errors).toEqual(['Import a maximum of 500 products at a time.']))
 })
 describe('money and checkout validation',()=>{

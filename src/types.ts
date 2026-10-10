@@ -26,5 +26,6 @@ export type OrderStatus = 'pending' | 'accepted' | 'out_for_delivery' | 'complet
 export interface Order {
   id: string; reference: string; customer_name: string; phone: string; address: string; locality: string; pincode: string;
   status: OrderStatus; total_paise: number; created_at: string; prescription_verified_at: string | null;
+  subtotal_paise?:number; delivery_fee_paise?:number; payment_method?:'cod'|'bank_transfer'; fulfilment_method?:'own_delivery'|'transporter'|'pickup'; reservation_expires_at?:string|null;
   order_items: { name: string; pack_size: string; quantity: number; unit_price_paise: number; prescription_required: boolean }[];
 }

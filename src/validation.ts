@@ -40,6 +40,7 @@ export function validateRows(rows: string[][], existing: Product[]): ImportPrevi
     if (price === null || price <= 0) errors.push('price must be positive rupees with at most 2 decimal places')
     const mrp = parsePrice(row.mrp)
     if (mrp === null || mrp <= 0) errors.push('mrp must be positive rupees with at most 2 decimal places')
+    if (price !== null && mrp !== null && mrp < price) errors.push('mrp cannot be lower than the wholesale price')
     for (const key of ['stock','units_per_case','minimum_order_quantity','quantity_step']) if (!/^\d{1,6}$/.test(row[key])) errors.push(`${key} must be a nonnegative whole number up to 999999`)
     if(Number(row.units_per_case)<1||Number(row.minimum_order_quantity)<1||Number(row.quantity_step)<1)errors.push('case size, MOQ and quantity step must be at least 1')
     if(!row.wholesale_unit||row.wholesale_unit.length>40)errors.push('wholesale_unit is required (max 40 characters)')

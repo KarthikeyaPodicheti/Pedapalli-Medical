@@ -21,3 +21,5 @@ npm run verify:cloudflare
 ```
 
 Production publishing is intentionally manual through the `Publish Cloudflare Free` GitHub Actions workflow. Required setup, free-tier limits and backup/restore instructions are in [PRODUCTION.md](PRODUCTION.md).
+
+The latest desktop/mobile buyer and staff review, before/after screenshots, completed fixes and remaining launch blockers are documented in [UX_AUDIT.md](UX_AUDIT.md).

@@ -47,6 +47,8 @@ Use this document during client meetings. Record exact answers, avoid assumption
 - [ ] How often will Excel be uploaded and who reconciles website stock with counter/phone sales?
 - [ ] Does existing POS/ERP/billing software expose an API or export format?
 - [ ] Who owns batch, expiry, recall, and near-expiry controls?
+- [ ] For prescription-class products sold B2B, what evidence must be checked before dispatch, who is legally responsible, and what must the system record?
+- [ ] What are the expected launch and 12-month counts for SKUs, approved buyers and orders per day?
 
 ### Orders and fulfilment
 
@@ -54,6 +56,7 @@ Use this document during client meetings. Record exact answers, avoid assumption
 - [ ] Order confirmation SLA, cut-off times, holidays, and cancellation window?
 - [ ] Exact order statuses used by staff?
 - [ ] Delivery areas/PIN codes and own-delivery rules?
+- [ ] Is delivery always to the registered business address, or may a verified buyer use branch/shipping addresses? Who approves changes?
 - [ ] Pickup location and pickup procedure?
 - [ ] Transporter partners, freight calculation/responsibility, tracking reference, and proof of delivery?
 - [ ] Process for shortages, substitutions, damaged goods, returns, and rejected COD orders?
@@ -82,6 +85,7 @@ Use this document during client meetings. Record exact answers, avoid assumption
 - [ ] Approved B2B terms, privacy policy, fulfilment policy, and cancellation/return policy?
 - [ ] Required data-retention and deletion periods?
 - [ ] Staff roles and the named people assigned to owner, sales, inventory, dispatch, and pharmacist/compliance roles?
+- [ ] Confirm the exact screen/action permissions for each staff role, including catalog approval and prescription/compliance evidence.
 - [ ] Is staff MFA acceptable and who manages access removal?
 - [ ] Required reports, exports, and audit history?
 - [ ] Backup/recovery expectations and acceptable downtime?

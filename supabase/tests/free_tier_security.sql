@@ -10,6 +10,15 @@ begin
   end if;
 end $$;
 
+do $$
+begin
+  begin
+    update public.products set mrp_paise=price_paise-1 where sku='TEST-1';
+    raise exception 'MRP below wholesale price was accepted';
+  exception when check_violation then null;
+  end;
+end $$;
+
 set role service_role;
 select public.submit_buyer_application_verified(jsonb_build_object(
   'businessName','Verified Medical Store','contactName','Verified Buyer','email','verified@example.in',
