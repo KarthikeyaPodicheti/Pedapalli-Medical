@@ -28,6 +28,8 @@ docker exec -i "$container_name" psql -U postgres -v ON_ERROR_STOP=1 < "$repo_ro
 docker exec -i "$container_name" psql -U postgres -v ON_ERROR_STOP=1 < "$repo_root/supabase/tests/batch_inventory_foundation.sql"
 docker exec -i "$container_name" psql -U postgres -v ON_ERROR_STOP=1 < "$repo_root/supabase/migrations/202610110002_shadow_batch_allocations.sql"
 docker exec -i "$container_name" psql -U postgres -v ON_ERROR_STOP=1 < "$repo_root/supabase/tests/shadow_batch_allocations.sql"
+docker exec -i "$container_name" psql -U postgres -v ON_ERROR_STOP=1 < "$repo_root/supabase/migrations/202610110003_receipt_idempotency.sql"
+docker exec -i "$container_name" psql -U postgres -v ON_ERROR_STOP=1 < "$repo_root/supabase/tests/receipt_idempotency.sql"
 
 race_order() {
   local buyer_id="$1" request_id="$2"
