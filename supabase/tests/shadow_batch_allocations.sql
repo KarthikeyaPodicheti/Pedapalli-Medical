@@ -18,13 +18,13 @@ begin
  if (select sum(quantity) from public.batch_order_allocations a
   join public.order_items i on i.id=a.order_item_id where i.order_id=target)<>5 then
   raise exception 'Shadow allocation quantity incorrect'; end if;
- if (select sellable from public.staff_batch_stock_summary() where batch_number='LOT-A')<>5 then
+ if (select on_hand-reserved from public.inventory_batches where batch_number='LOT-A')<>5 then
   raise exception 'Batch stock was not reserved'; end if;
  if public.release_rehearsed_batch_allocation(target)<>5 then
   raise exception 'First release incorrect'; end if;
  if public.release_rehearsed_batch_allocation(target)<>0 then
   raise exception 'Release was not idempotent'; end if;
- if (select sellable from public.staff_batch_stock_summary() where batch_number='LOT-A')<>10 then
+ if (select on_hand-reserved from public.inventory_batches where batch_number='LOT-A')<>10 then
   raise exception 'Released stock not restored'; end if;
 end $$;
 reset role;
