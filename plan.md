@@ -263,3 +263,10 @@ Until these decisions and the production gates are complete, keep the existing d
 - Verified: TypeScript production build, unit tests, desktop/mobile browser tests, and both database migrations against PostgreSQL, including application, approval, order creation, idempotent retry, cancellation and exact stock release.
 - Not yet activated: staging/production Supabase projects, real client data, staff accounts/MFA, email/WhatsApp notifications, billing handoff, policies, monitoring/backups, custom domain, controlled pilot and client/compliance sign-off.
 - Activation procedure: follow `PRODUCTION.md`; keep `checkout_enabled=false` until every applicable production acceptance gate is evidenced.
+
+### Staging-readiness progress — 10 October 2026
+
+- Added a repeatable PostgreSQL integration suite and dedicated CI gate for migrations, RLS, buyer isolation, staff roles, price redaction, MOQ, idempotency, concurrent last-stock orders, reservation expiry and exact stock release.
+- Added the secure maintenance Edge Function and durable notification claiming/retry workflow for transactional email and approved WhatsApp templates.
+- Added a protected manual staging-deployment workflow for reviewed migrations and Edge Functions.
+- Next dependency: provision the staging Supabase project and provider sandboxes, then run the first controlled end-to-end staging order.

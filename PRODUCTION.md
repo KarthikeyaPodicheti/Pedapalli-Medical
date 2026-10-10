@@ -13,6 +13,20 @@ Create separate Supabase projects for staging and production. In each project:
 5. Schedule `select public.release_expired_b2b_orders();` at least every five minutes using Supabase Cron or an equivalent trusted scheduler.
 6. Enable backups/PITR appropriate to the client’s recovery requirement.
 
+The repository includes a manual `Deploy Supabase Staging` GitHub Actions workflow. Configure a protected `staging` environment with:
+
+- Variable: `SUPABASE_PROJECT_REF`
+- Secrets: `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`
+
+Set these Supabase Edge Function secrets before running maintenance:
+
+- `MAINTENANCE_SECRET`
+- `RESEND_API_KEY` and `EMAIL_FROM`
+- `WHATSAPP_ACCESS_TOKEN` and `WHATSAPP_PHONE_NUMBER_ID`
+- One approved template variable per event, such as `WHATSAPP_TEMPLATE_ORDER_SUBMITTED`
+
+Call the `maintenance` function every five minutes using `Authorization: Bearer <MAINTENANCE_SECRET>`. It releases expired reservations, claims notification jobs with `SKIP LOCKED`, sends configured email/WhatsApp messages and records retryable failures. Never place the maintenance secret in frontend code.
+
 ## 2. Configure hosting
 
 Set these GitHub repository Actions variables separately for the intended backend:
@@ -45,6 +59,8 @@ Run a staging pilot with synthetic or controlled records:
 7. Buyer isolation and staff roles are tested, backups are restored, and staff completes the operating runbook.
 
 Only after client/compliance sign-off should an owner enable `Accept online order requests` in Store settings.
+
+The same database suite used in CI can be run locally with `npm run test:db`. It creates an isolated PostgreSQL container and verifies migrations, RLS, role boundaries, price redaction, MOQ rules, idempotency, concurrent last-stock ordering, cancellation, expiration and notification claiming.
 
 ## Still required outside this repository
 

@@ -17,6 +17,11 @@ export interface BuyerBusiness {
   drug_licence_number:string; registered_address:string; pincode:string; status:BuyerStatus;
   reviewed_at:string|null; review_note:string|null; created_at:string;
 }
+export interface NotificationDelivery {
+  id:number; channel:'email'|'whatsapp'; event_name:string; status:'pending'|'processing'|'sent'|'failed';
+  attempts:number; last_error:string|null; created_at:string;
+  buyer_businesses:{legal_name:string}|null; orders:{reference:string}|null;
+}
 export type OrderStatus = 'pending' | 'accepted' | 'out_for_delivery' | 'completed' | 'cancelled'
 export interface Order {
   id: string; reference: string; customer_name: string; phone: string; address: string; locality: string; pincode: string;

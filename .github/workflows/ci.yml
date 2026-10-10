@@ -16,5 +16,14 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: deno check supabase/functions/checkout/index.ts supabase/functions/maintenance/index.ts
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+  database:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm run test:db

@@ -138,10 +138,11 @@ create table public.notification_deliveries (
   buyer_id uuid references public.buyer_businesses(id) on delete cascade,
   channel text not null check (channel in ('email','whatsapp')),
   event_name text not null check (length(event_name) between 1 and 80),
-  status text not null default 'pending' check (status in ('pending','sent','failed')),
+  status text not null default 'pending' check (status in ('pending','processing','sent','failed')),
   attempts integer not null default 0 check (attempts between 0 and 20),
   provider_reference text,
   last_error text check (length(last_error) <= 500),
+  next_attempt_at timestamptz not null default now(),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -325,6 +326,38 @@ end;
 $$;
 revoke all on function public.release_expired_b2b_orders() from public,anon,authenticated;
 grant execute on function public.release_expired_b2b_orders() to service_role;
+
+create or replace function public.claim_notification_deliveries(batch_size integer default 20)
+returns table(id bigint,channel text,event_name text,email text,phone text,legal_name text,order_reference text,order_status text)
+language sql security definer set search_path=public,pg_temp as $$
+  with claimed as (
+    select n.id from public.notification_deliveries n
+    where n.status in ('pending','failed') and n.attempts<5 and n.next_attempt_at<=now()
+    order by n.created_at,n.id for update skip locked limit least(greatest(batch_size,1),50)
+  ), updated as (
+    update public.notification_deliveries n set status='processing',attempts=attempts+1,updated_at=now()
+    from claimed where n.id=claimed.id returning n.*
+  )
+  select u.id,u.channel,u.event_name,b.email,b.phone,b.legal_name,o.reference,o.status
+  from updated u join public.buyer_businesses b on b.id=u.buyer_id
+  left join public.orders o on o.id=u.order_id order by u.id;
+$$;
+revoke all on function public.claim_notification_deliveries(integer) from public,anon,authenticated;
+grant execute on function public.claim_notification_deliveries(integer) to service_role;
+
+create or replace function public.complete_notification_delivery(delivery_id bigint,was_sent boolean,provider_ref text default null,error_message text default null) returns void
+language plpgsql security definer set search_path=public,pg_temp as $$
+begin
+  update public.notification_deliveries set status=case when was_sent then 'sent' else 'failed' end,
+    provider_reference=case when was_sent then left(provider_ref,200) else provider_reference end,
+    last_error=case when was_sent then null else left(coalesce(error_message,'Provider request failed'),500) end,
+    next_attempt_at=case when was_sent then next_attempt_at else now()+make_interval(mins=>least(60,1<<least(attempts,6))) end,
+    updated_at=now() where id=delivery_id and status='processing';
+  if not found then raise exception 'Notification delivery is not processing'; end if;
+end;
+$$;
+revoke all on function public.complete_notification_delivery(bigint,boolean,text,text) from public,anon,authenticated;
+grant execute on function public.complete_notification_delivery(bigint,boolean,text,text) to service_role;
 
 create or replace function public.transition_order(order_id uuid,next_status text,verify_prescription boolean default false) returns void
 language plpgsql security definer set search_path=public,pg_temp as $$

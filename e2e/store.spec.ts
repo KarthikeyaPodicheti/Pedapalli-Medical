@@ -47,6 +47,8 @@ test('buyer application stays a local preview and staff can review buyers',async
   await page.getByRole('button',{name:'Explore admin preview'}).click()
   await page.getByRole('button',{name:'Buyers'}).click()
   await expect(page.getByText('Lakshmi Medical Agencies')).toBeVisible()
+  await page.getByRole('button',{name:'Notifications'}).click()
+  await expect(page.getByRole('heading',{name:'Delivery history will appear here'})).toBeVisible()
 })
 
 test('staff preview edits inventory and validates bulk CSV before saving',async({page})=>{

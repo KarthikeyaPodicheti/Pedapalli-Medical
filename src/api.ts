@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import type { CartItem, Product, StoreSettings, Order, OrderStatus, BuyerBusiness } from './types'
+import type { CartItem, Product, StoreSettings, Order, OrderStatus, BuyerBusiness, NotificationDelivery } from './types'
 const url = import.meta.env.VITE_SUPABASE_URL
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY
 export const supabase = url && key ? createClient(url,key) : null
@@ -39,6 +39,7 @@ export async function submitB2BOrder(cart:CartItem[],payment:string,fulfilment:s
 export async function listBuyers(){const {data,error}=await supabase!.from('buyer_businesses').select('*').order('created_at',{ascending:false});if(error)throw error;return data as BuyerBusiness[]}
 export async function reviewBuyer(id:string,status:'approved'|'rejected'|'suspended',note=''){const {error}=await supabase!.rpc('review_buyer',{target_buyer:id,next_status:status,note});if(error)throw error}
 export async function listMyOrders(){const {data,error}=await supabase!.from('orders').select('*,order_items(*)').order('created_at',{ascending:false}).limit(100);if(error)throw error;return data as Order[]}
+export async function listNotificationDeliveries(){const {data,error}=await supabase!.from('notification_deliveries').select('*,buyer_businesses(legal_name),orders(reference)').order('created_at',{ascending:false}).limit(100);if(error)throw error;return data as unknown as NotificationDelivery[]}
 export async function saveProducts(products: Product[]) {
   const { error } = await supabase!.rpc('upsert_inventory',{ changes:products })
   if(error) throw error
