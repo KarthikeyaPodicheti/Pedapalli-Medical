@@ -1,3 +1,5 @@
+Use a prd.md to gain more context.
+
 Use any stock images and i need you to start using phosphor icons
 
 # Project brief
