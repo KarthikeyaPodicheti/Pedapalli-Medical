@@ -26,6 +26,7 @@ docker exec -i "$container_name" psql -U postgres -v ON_ERROR_STOP=1 < "$repo_ro
 # PRD batch inventory migration smoke test
 docker exec -i "$container_name" psql -U postgres -v ON_ERROR_STOP=1 < "$repo_root/supabase/migrations/202610110001_batch_inventory_foundation.sql"
 docker exec -i "$container_name" psql -U postgres -v ON_ERROR_STOP=1 < "$repo_root/supabase/tests/batch_inventory_foundation.sql"
+docker exec -i "$container_name" psql -U postgres -v ON_ERROR_STOP=1 < "$repo_root/supabase/migrations/202610110002_shadow_batch_allocations.sql"
 
 race_order() {
   local buyer_id="$1" request_id="$2"
