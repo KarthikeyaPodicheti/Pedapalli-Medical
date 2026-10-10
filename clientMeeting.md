@@ -126,3 +126,50 @@ Do not enable production ordering until legal identity, buyer verification, appr
 - Production remains intentionally disabled because no Supabase project/credentials or verified client operating data are available in the build environment.
 - The free-tier implementation adds Cloudflare deployment, Turnstile-protected applications and encrypted database backups to private R2; the client must still approve downtime, retention and manual-fallback ownership.
 - At the next client meeting, prioritize legal identity, catalog spreadsheet, delivery/payment rules, billing/GST handoff, staff assignments, policies and launch sign-off. Record answers above before activation.
+
+## Next client meeting — priority discovery questions (2026-10-11)
+
+> Ask the distributor to demonstrate one real order from request to delivery. Record actual practice, named owner, decision, and follow-up for each answer. These questions are **open** until the client confirms them; previous product-design discussions are not client sign-off.
+
+### 45-minute meeting agenda
+
+| Time | Topic | Intended outcome |
+| --- | --- | --- |
+| 0–5 min | Current ordering and stock-shortage problem | Confirm the main business objective |
+| 5–15 min | Trace a real order through packing and delivery | Map operational workflow and handoffs |
+| 15–25 min | Excel stock, receipts, and shortages | Establish inventory source of truth and ownership |
+| 25–35 min | Pricing, GST billing, payments, delivery | Confirm commercial and legal handoffs |
+| 35–45 min | Pilot scope, staff responsibilities, sign-off | Agree on MVP and next actions |
+
+### Questions to ask the distributor
+
+- [ ] **Order fulfilment:** Does the delivery van follow fixed routes? Who picks and packs orders? What are the daily order cutoffs, delivery schedules, and confirmation times?
+- [ ] **Pricing:** Does every medical store receive the same wholesale price, or do stores have negotiated/customer-specific prices? Who maintains price changes?
+- [ ] **Invoicing:** How are GST invoices currently generated? Which billing software or manual process is used? Can you show a real, redacted invoice? Should the portal integrate with billing or only hand off confirmed orders?
+- [ ] **Inventory:** Can you share a representative Excel inventory file? Does it contain SKU, batch number, expiry date, units, and stock quantity? Who enters new receipts, and how are counter/phone/driver sales deducted?
+- [ ] **Payments:** Are all orders paid on delivery, or do some stores use credit accounts, bank transfer, or UPI? Who records collections and reconciles unpaid orders?
+- [ ] **Staffing and permissions:** Who is the daily inventory owner? Who can enter stock, approve corrections, confirm orders, pack orders, and act as backup when the owner is absent?
+- [ ] **Returns and rejected deliveries:** What happens when a medical store rejects, returns, or reports damaged medicines? Who inspects and authorizes stock to become sellable again?
+- [ ] **Pilot rollout:** Which 5–10 medical stores can test the portal first? Who will train them, collect feedback, and approve going live?
+
+### Evidence to collect
+
+- [ ] A sample inventory spreadsheet (remove sensitive information if necessary).
+- [ ] A redacted wholesale GST invoice and the name of the existing billing system.
+- [ ] An example of an order that could not be fulfilled because the requested medicine was out of stock.
+- [ ] If available, a typical delivery route sheet or dispatch note.
+
+### Record the outcome
+
+| Question | Client answer / current practice | Decision owner | Follow-up / deadline |
+| --- | --- | --- | --- |
+| Order fulfilment | Pending | | |
+| Pricing | Pending | | |
+| Invoicing | Pending | | |
+| Inventory and Excel | Pending | | |
+| Payments and credit | Pending | | |
+| Staff ownership | Pending | | |
+| Returns | Pending | | |
+| Pilot stores | Pending | | |
+
+**Important:** Do not treat suggested MVP workflows as approved until the distributor validates them and the launch-critical decisions are signed off.
