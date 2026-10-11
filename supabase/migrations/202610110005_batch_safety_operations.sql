@@ -31,7 +31,7 @@ create or replace function public.receive_quarantined_return(
 begin
  if not public.has_staff_role(array['owner','inventory']) then raise exception 'Inventory role required'; end if;
  if length(trim(coalesce(return_reason,'')))<10 then raise exception 'Return reason required'; end if;
- return public.receive_inventory_batch(target_product,lot_number,expires_on,
+ return public.receive_inventory_batch(target_product,'RET-'||left(md5(trim(return_reference)),12)||'-'||left(trim(lot_number),80),expires_on,
    returned_quantity,'RETURN:'||trim(return_reference),'Return quarantine: '||trim(return_reason));
 end;
 $$;
