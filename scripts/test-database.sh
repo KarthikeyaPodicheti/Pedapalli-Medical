@@ -32,6 +32,8 @@ docker exec -i "$container_name" psql -U postgres -v ON_ERROR_STOP=1 < "$repo_ro
 docker exec -i "$container_name" psql -U postgres -v ON_ERROR_STOP=1 < "$repo_root/supabase/tests/receipt_idempotency.sql"
 docker exec -i "$container_name" psql -U postgres -v ON_ERROR_STOP=1 < "$repo_root/supabase/migrations/202610110004_buyer_pending_cancellation.sql"
 docker exec -i "$container_name" psql -U postgres -v ON_ERROR_STOP=1 < "$repo_root/supabase/tests/buyer_pending_cancellation.sql"
+docker exec -i "$container_name" psql -U postgres -v ON_ERROR_STOP=1 < "$repo_root/supabase/migrations/202610110005_batch_safety_operations.sql"
+docker exec -i "$container_name" psql -U postgres -v ON_ERROR_STOP=1 < "$repo_root/supabase/tests/batch_safety_operations.sql"
 
 race_order() {
   local buyer_id="$1" request_id="$2"
