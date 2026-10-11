@@ -31,3 +31,13 @@ Apply the new migration to a **disposable staging database** and test: receipt +
 - This is **not live checkout integration**. Product-level stock and reservation/expiry/cancellation remain authoritative; shadow allocations must not be used for real picking or buyer stock display.
 - The rehearsal audit uses a designated owner account because the service actor is not a human; this attribution must be redesigned before production use.
 - **Not executed**: database suite and concurrent-race tests; local Docker/Postgres binaries are unavailable. PR remains draft.
+
+## 2026-10-11 implementation continuation
+
+Added migrations `202610110003_receipt_idempotency.sql`, `202610110004_buyer_pending_cancellation.sql`, and `202610110005_batch_safety_operations.sql`. Added corresponding database regression scripts and wired them into `scripts/test-database.sh`. The buyer UI now exposes pending-order cancellation, and the staff UI has a staff-only batch-alerts panel.
+
+**Verification status: NOT RUN.** This execution container has Node.js and npm but no Docker or PostgreSQL CLI, and network access to GitHub is unavailable from the shell. GitHub connector writes succeeded, but that is not evidence of build, test, or deployment success. GitHub Actions CI exists in `.github/workflows/ci.yml` and should be checked by Codex. The feature branch remains a draft PR.
+
+**Still required to meet the PRD MVP:** live batch-aware atomic checkout and cancellation/expiry ledger; authoritative sellable catalog stock; controlled Excel cutover with representative client data and opening-order reconciliation; same-ledger staff-assisted orders; full picking/packing/dispatch and shortage review; proper staff RBAC UI and verified approval evidence; inventory import mode split and unit normalization; return disposition; reporting/KPIs; payment and billing handoff; notification templates/provider configuration; concurrency/security/E2E tests and actual CI evidence.
+
+**Client sign-off blockers:** legal/regulatory and pharmacist rules, unit conversions, minimum shelf-life, exact Excel format, GST/invoice handoff, payment/fulfilment policy, notification sender/templates, staff identities, and acceptance of reconciled opening stock. Do not claim full PRD completion or enable checkout before these are resolved.
