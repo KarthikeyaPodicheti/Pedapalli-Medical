@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>Pedapalli Medical — Version comparison</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; font-family: Inter, system-ui, sans-serif; color: #153c31; background: #edf6f2; }
+      header { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 64px; padding: 12px 20px; background: #fff; border-bottom: 1px solid #cee2da; }
+      h1 { margin: 0; font-size: 18px; }
+      p { margin: 3px 0 0; color: #56736a; font-size: 13px; }
+      nav { display: flex; gap: 8px; }
+      a { padding: 9px 12px; border-radius: 8px; color: #087452; background: #e4f4ed; font-size: 13px; font-weight: 700; text-decoration: none; }
+      main { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; height: calc(100vh - 64px); background: #b9d4ca; }
+      section { display: grid; grid-template-rows: 38px 1fr; min-width: 0; background: #fff; }
+      h2 { display: flex; align-items: center; justify-content: center; margin: 0; color: #fff; background: #096b50; font-size: 14px; letter-spacing: .03em; }
+      section:last-child h2 { background: #124f75; }
+      iframe { width: 100%; height: 100%; border: 0; background: #fff; }
+      @media (max-width: 760px) {
+        header { align-items: flex-start; flex-direction: column; }
+        main { grid-template-columns: 1fr; height: auto; }
+        section { height: 75vh; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div><h1>Pedapalli Medical comparison</h1><p>Current main version and batch-inventory feature preview</p></div>
+      <nav><a href="../" target="_blank">Open current</a><a href="../feature/" target="_blank">Open feature</a></nav>
+    </header>
+    <main>
+      <section><h2>CURRENT VERSION</h2><iframe src="../" title="Current main version"></iframe></section>
+      <section><h2>FEATURE VERSION</h2><iframe src="../feature/" title="Batch inventory feature version"></iframe></section>
+    </main>
+  </body>
+</html>
