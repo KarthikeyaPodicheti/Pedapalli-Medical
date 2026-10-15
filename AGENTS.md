@@ -1,5 +1,15 @@
 Use a prd.md to gain more context.
 
+# Codex startup and verification instructions
+
+When opening this repository in Codex, first read `PRD.md`, `docs/PRD_IMPLEMENTATION_STATUS.md`, `docs/INVENTORY_CUTOVER_PLAN.md`, and `PRODUCTION.md`. Treat the PRD as draft: do not fabricate client approval, medicine inventory, GST rules, or legal sign-off.
+
+Before making changes, check availability of Node.js, npm, Docker, and the Docker daemon (`node --version`, `npm --version`, `docker --version`, `docker info`). The database test runner uses `postgres:17-alpine` in Docker; a standalone local PostgreSQL installation is not required when Docker works. If Docker is unavailable, install or start it **only when environment permissions allow**, otherwise report the blocker explicitly. Never claim tests passed unless their commands actually ran successfully.
+
+At the start of a Codex implementation session, install dependencies with `npm ci` if needed and run `npm run build`, `npm test -- --run`, and `npm run test:db`. If Playwright browser dependencies are available, run `npm run test:e2e`; otherwise run `npx playwright install --with-deps chromium` only when permitted and rerun the tests. Re-run relevant tests after every code change and all four suites before marking a PR ready for review. Record the exact command, exit status, failing assertion, and environment blocker in `docs/PRD_IMPLEMENTATION_STATUS.md`.
+
+Pay particular attention to: receipt idempotency, concurrent last-stock orders, full-cart atomicity, FEFO eligibility, cancellation/expiry exactly-once release, role-based security, Excel import safeguards, and the transition from product stock to batch stock. The current shadow allocation implementation is not live checkout. Do not enable `checkout_enabled`, merge the feature PR, deploy, or apply a production cutover without staging rehearsal, reconciliation, tested recovery, and documented owner/compliance sign-off.
+
 Use any stock images and i need you to start using phosphor icons
 
 # Project brief

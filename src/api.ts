@@ -51,3 +51,10 @@ export async function updateOrder(id:string,status:OrderStatus,verifyPrescriptio
   const {error}=await supabase!.rpc('transition_order',{order_id:id,next_status:status,verify_prescription:verifyPrescription})
   if(error) throw error
 }
+
+/** Cancel an authenticated buyer's pending order; stock release is handled atomically in SQL. */
+export async function cancelMyPendingOrder(orderId:string){
+  if(!supabase)throw new Error('Backend is not configured.')
+  const {error}=await supabase.rpc('cancel_my_pending_order',{target_order:orderId})
+  if(error)throw new Error(error.message||'Unable to cancel this order.')
+}

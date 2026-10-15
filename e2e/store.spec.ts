@@ -61,6 +61,8 @@ test('buyer application stays a local preview and staff can review buyers',async
   await page.getByRole('button',{name:'Explore admin preview'}).click()
   await page.getByRole('button',{name:'Buyers'}).click()
   await expect(page.getByText('Lakshmi Medical Agencies')).toBeVisible()
+  await page.getByRole('button',{name:'Batch alerts'}).click()
+  await expect(page.getByText(/Connect the backend to review real batch alerts/)).toBeVisible()
   await page.getByRole('button',{name:'Notifications'}).click()
   await expect(page.getByRole('heading',{name:'Delivery history will appear here'})).toBeVisible()
 })
