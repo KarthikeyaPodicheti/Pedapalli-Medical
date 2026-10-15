@@ -10,11 +10,20 @@ cleanup() {
 trap cleanup EXIT
 
 docker run --rm --name "$container_name" -e POSTGRES_PASSWORD=localcheck -d postgres:17-alpine >/dev/null
-for _ in {1..30}; do
-  if docker exec "$container_name" pg_isready -U postgres >/dev/null 2>&1; then break; fi
+database_ready=false
+for _ in {1..60}; do
+  # TCP becomes ready only for the final server, not the temporary init server.
+  if docker exec "$container_name" pg_isready -h 127.0.0.1 -U postgres >/dev/null 2>&1; then
+    database_ready=true
+    break
+  fi
   sleep 1
 done
-docker exec "$container_name" pg_isready -U postgres >/dev/null
+if [[ "$database_ready" != true ]]; then
+  docker logs "$container_name" >&2 || true
+  echo "PostgreSQL test container did not become ready." >&2
+  exit 1
+fi
 
 docker exec -i "$container_name" psql -U postgres -v ON_ERROR_STOP=1 < "$repo_root/supabase/tests/bootstrap.sql"
 docker exec -i "$container_name" psql -U postgres -v ON_ERROR_STOP=1 < "$repo_root/supabase/migrations/202610070001_store.sql"
