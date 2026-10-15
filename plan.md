@@ -12,7 +12,7 @@ The commercial goal is a reliable product that can be sold to the client, config
 
 - Buyers are medical stores and other eligible medicine-retail businesses.
 - Wholesale prices and ordering are available only to approved buyer accounts.
-- Registration collects business details, GSTIN, and drug-licence numbers. Verification happens outside the website initially; document upload is not required in version one.
+- Registration collects business details, an optional GSTIN, and a required drug-licence number. Verification happens outside the website initially; document upload is not required in version one.
 - Staff must approve the buyer before catalog prices and ordering unlock.
 - Version one uses fixed wholesale pricing rather than negotiated or buyer-tier pricing.
 - Each product defines its wholesale unit, units per case where relevant, minimum order quantity, and allowed quantity step.
@@ -45,7 +45,7 @@ Registration collects:
 - Legal business/trading name.
 - Proprietor or authorized-contact name.
 - Business email and verified Indian mobile number.
-- GSTIN.
+- GSTIN, when the buyer has one (optional).
 - Retail/wholesale drug-licence number or numbers and expiry dates where applicable.
 - Billing and shipping addresses.
 - Preferred fulfilment method.
@@ -168,7 +168,7 @@ The current consumer-shaped schema must be migrated rather than switched on unch
 
 ### Core data model
 
-- `buyer_businesses`: identity, GSTIN, licence numbers/expiry, addresses, verification state, suspension state, timestamps.
+- `buyer_businesses`: identity, optional GSTIN, licence numbers/expiry, addresses, verification state, suspension state, timestamps.
 - `buyer_users`: authenticated users linked to a business with buyer-side roles.
 - `staff_members`: authenticated users with explicit operational roles.
 - `products`: verified catalog and wholesale-ordering fields.
@@ -278,7 +278,7 @@ Until these decisions and the production gates are complete, keep the existing d
 
 ## 15. Implementation status — 9 October 2026
 
-- Completed in the repository: responsive B2B storefront; email-link buyer authentication; GSTIN/drug-licence application; staff approval/suspension; price and stock redaction; pharmacist-approved catalog gating; wholesale units, case sizes, MOQ and steps; validated bulk import; server-authoritative COD/bank-transfer order requests; delivery/transporter/pickup selection; deterministic stock locking; idempotency; reservation expiry release; buyer-isolated RLS; staff transitions; and audit events.
+- Completed in the repository: responsive B2B storefront; email-link buyer authentication; optional-GSTIN/required-drug-licence application; staff approval/suspension; price and stock redaction; pharmacist-approved catalog gating; wholesale units, case sizes, MOQ and steps; validated bulk import; server-authoritative COD/bank-transfer order requests; delivery/transporter/pickup selection; deterministic stock locking; idempotency; reservation expiry release; buyer-isolated RLS; staff transitions; and audit events.
 - Verified: TypeScript production build, unit tests, desktop/mobile browser tests, and both database migrations against PostgreSQL, including application, approval, order creation, idempotent retry, cancellation and exact stock release.
 - Not yet activated: staging/production Supabase projects, real client data, staff accounts/MFA, email/WhatsApp notifications, billing handoff, policies, monitoring/backups, custom domain, controlled pilot and client/compliance sign-off.
 - Activation procedure: follow `PRODUCTION.md`; keep `checkout_enabled=false` until every applicable production acceptance gate is evidenced.

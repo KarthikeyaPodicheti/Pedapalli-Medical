@@ -101,7 +101,7 @@ The product will give **approved medical-store buyers** visibility into **exact 
 ## 5. End-to-end journeys
 
 ### J1. Buyer onboarding
-1. Buyer signs in through approved authentication and submits legal business name, contact, phone, email, registered address/PIN, GSTIN, and drug-licence information.
+1. Buyer signs in through approved authentication and submits legal business name, contact, phone, email, registered address/PIN, an optional GSTIN, and required drug-licence information.
 2. Account remains **pending**; no wholesale prices, sellable stock quantities, or ordering until approved.
 3. Authorized reviewer checks the business and applicable licences using a client-approved verification process, records reviewer, date, outcome, and reason.
 4. Approve, reject, suspend, or reactivate through auditable transitions. Define licence re-verification/expiry handling with the client.
@@ -160,7 +160,7 @@ The product will give **approved medical-store buyers** visibility into **exact 
 Each item uses **FR-ID**, priority (`Must`, `Should`, `Later`), provenance, and acceptance expectation.
 
 ### 6.1 Identity, buyer verification, and access
-- **FR-001 (Must; D/R):** Business-only account registration; collect legal identity, GSTIN, drug licence, contact, and address. Reject malformed inputs; verification is manual, not just a regex check.
+- **FR-001 (Must; D/R):** Business-only account registration; collect legal identity, optional GSTIN, required drug licence, contact, and address. Reject malformed inputs; verification is manual, not just a regex check.
 - **FR-002 (Must; D/R):** Pending/rejected/suspended businesses cannot see protected prices, exact stock, or create orders; enforce via backend/RLS, not only hidden UI.
 - **FR-003 (Must; P/C):** Review records must include reviewer, verification checklist, timestamp, and rejection/suspension reason; licence re-verification policy is client-defined.
 - **FR-004 (Must; D/R):** Individual staff identities with least privilege, role-scoped APIs and audit trails; require MFA for production staff as specified in runbook.

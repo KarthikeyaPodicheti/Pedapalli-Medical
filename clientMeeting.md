@@ -7,7 +7,7 @@ Use this document during client meetings. Record exact answers, avoid assumption
 - The client is a pharmaceutical wholesaler in Peddapalli, Telangana.
 - The first release is B2B for medical-store buyers; B2C is deferred.
 - Only approved medical stores may see wholesale prices and order.
-- Buyer verification initially uses GSTIN and drug-licence numbers without document upload.
+- Buyer verification requires a drug-licence number; GSTIN is optional. Documents are not uploaded in version one.
 - Version one uses fixed wholesale prices and product-specific MOQ/quantity steps.
 - Payments are COD or bank transfer; every order requires wholesaler confirmation.
 - Fulfilment should support own delivery, transporter delivery, and pickup.
@@ -104,6 +104,7 @@ Add confirmed client answers here using this format:
 | Pending | GST invoicing | Awaiting client billing-workflow review | Production launch remains blocked | Identify current billing software |
 | Pending | Brand identity | Collect verified legal and public brand details | Continue using demo placeholders | Obtain logo and licence/contact details |
 | Pending | Hosting budget | Proposed Cloudflare Free + Supabase Free controlled pilot | No uptime SLA; strict quota and fallback controls required | Client must accept risk and upgrade triggers |
+| 15 October 2026 | Buyer GSTIN | GSTIN is optional; the drug-licence number remains required | Registration, database validation and staff review accept a missing GSTIN | Confirm whether non-GST buyers need invoice or ordering restrictions |
 
 ## Materials to request
 

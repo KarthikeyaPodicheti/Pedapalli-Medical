@@ -1,6 +1,6 @@
 # Pedapalli Medical
 
-A mobile-first B2B pharmaceutical wholesale portal for verified medical stores. The preview includes gated wholesale pricing, GSTIN and drug-licence application, product-specific MOQ and order steps, wholesale cart and fulfilment choices, a buyer-review workspace, and CSV/XLSX inventory tools.
+A mobile-first B2B pharmaceutical wholesale portal for verified medical stores. The preview includes gated wholesale pricing, optional GSTIN and required drug-licence application details, product-specific MOQ and order steps, wholesale cart and fulfilment choices, a buyer-review workspace, and CSV/XLSX inventory tools.
 
 Without Supabase environment variables, the site is a safe product preview and applications/orders are not transmitted. The selected ₹0 pilot architecture uses Cloudflare Workers Static Assets and Turnstile with Supabase Free for Postgres, Auth, RLS and Edge Functions. It supports email-link authentication, buyer approval, protected pricing, server-authoritative ordering, stock reservation, order transitions and buyer-isolated records. Follow [PRODUCTION.md](PRODUCTION.md) before activation.
 

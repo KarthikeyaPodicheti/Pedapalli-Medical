@@ -49,7 +49,7 @@ test('buyer application stays a local preview and staff can review buyers',async
   await dialog.getByLabel('Authorized contact').fill('Demo Owner')
   await dialog.getByLabel('Business email').fill('owner@example.in')
   await dialog.getByLabel('Mobile number').fill('9876543210')
-  await dialog.getByLabel('GSTIN').fill('36ABCDE1234F1Z5')
+  await expect(dialog.getByLabel('GSTIN (optional)')).not.toHaveAttribute('required')
   await dialog.getByLabel('Drug licence number').fill('TG/20B/DEMO-100')
   await dialog.getByLabel('Registered business address').fill('Market Road, Peddapalli, Telangana')
   await dialog.getByLabel('PIN code').fill('505172')

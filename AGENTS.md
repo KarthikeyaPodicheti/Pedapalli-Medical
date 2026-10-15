@@ -6,7 +6,7 @@ Use any stock images and i need you to start using phosphor icons
 
 Build a production-ready, sellable B2B pharmaceutical wholesale portal for one medicine wholesaler in Peddapalli, Telangana. The first customers are medical-store businesses—not individual consumers. B2C is a separate future phase and must not shape or weaken the first B2B release.
 
-Only approved medical stores may see wholesale prices or place orders. A buyer registers with business identity, contact and address details, GSTIN, and drug-licence numbers. Documents are verified outside the website for the first version; staff approves or rejects the account before catalog access is unlocked.
+Only approved medical stores may see wholesale prices or place orders. A buyer registers with business identity, contact and address details, an optional GSTIN, and a required drug-licence number. Documents are verified outside the website for the first version; staff approves or rejects the account before catalog access is unlocked.
 
 The first commercial model uses fixed wholesale prices, product-specific wholesale units, minimum order quantities, and quantity steps. Buyers may choose COD or bank transfer, and every order remains subject to wholesaler confirmation. Fulfilment must support configurable local delivery, transporter delivery, and store pickup. Buyers and staff receive email and approved-provider WhatsApp notifications.
 

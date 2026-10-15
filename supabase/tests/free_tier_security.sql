@@ -22,7 +22,7 @@ end $$;
 set role service_role;
 select public.submit_buyer_application_verified(jsonb_build_object(
   'businessName','Verified Medical Store','contactName','Verified Buyer','email','verified@example.in',
-  'phone','9876543212','gstin','36ABCDE1234F1Z7','drugLicence','DL-VERIFIED-2',
+  'phone','9876543212','drugLicence','DL-VERIFIED-2',
   'address','Main Road Peddapalli Telangana','pincode','505172'
 ),'55555555-5555-4555-8555-555555555555','verified@example.in');
 reset role;
@@ -31,5 +31,12 @@ do $$
 begin
   if not exists(select 1 from public.buyer_users where user_id='55555555-5555-4555-8555-555555555555') then
     raise exception 'Verified buyer application was not stored';
+  end if;
+  if not exists(
+    select 1 from public.buyer_businesses b
+    join public.buyer_users u on u.buyer_id=b.id
+    where u.user_id='55555555-5555-4555-8555-555555555555' and b.gstin is null
+  ) then
+    raise exception 'Buyer application without GSTIN was not stored as null';
   end if;
 end $$;
