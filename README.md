@@ -4,6 +4,10 @@ A mobile-first B2B pharmaceutical wholesale portal for verified medical stores. 
 
 Without Supabase environment variables, the site is a safe product preview and applications/orders are not transmitted. The selected ₹0 pilot architecture uses Cloudflare Workers Static Assets and Turnstile with Supabase Free for Postgres, Auth, RLS and Edge Functions. It supports email-link authentication, buyer approval, protected pricing, server-authoritative ordering, stock reservation, order transitions and buyer-isolated records. Follow [PRODUCTION.md](PRODUCTION.md) before activation.
 
+## GitHub Pages preview
+
+[Open the live preview](https://karthikeyapodicheti.github.io/Pedapalli-Medical/). The [feature comparison preview](https://karthikeyapodicheti.github.io/Pedapalli-Medical/feature/) is also available when the Pages comparison workflow has been deployed.
+
 ## Local development
 
 ```sh
