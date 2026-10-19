@@ -28,9 +28,10 @@ rebuilt in `server/` and `compose.yaml`: local password authentication, separate
 buyer/staff identities, transactional buyer review, quarantined batch receiving,
 pharmacist release, authoritative FEFO reservation, idempotent orders, and
 exactly-once cancellation/expiry release. This is new work, not recovery of the
-missing commit. The connected local frontend and staff MFA are still absent.
+missing commit. The connected local buyer/staff portal and TOTP MFA enrollment
+were then added and independently tested.
 
-Next complete controlled import/reconciliation, the connected local UI, assisted orders,
+Next complete controlled import/reconciliation, assisted orders,
 picking/packing/dispatch, payment records, billing export, reporting and tested
 backup/restore. Keep real ordering disabled pending verified stock, operational
 acceptance and owner/compliance sign-off. Never fabricate client data.

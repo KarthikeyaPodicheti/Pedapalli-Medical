@@ -12,10 +12,10 @@ permission-checked buyer review, protected prices/stock, quarantined batch
 receiving, pharmacist release, minimum shelf-life eligibility, atomic FEFO
 reservation, idempotency, cancellation/expiry release and audit records.
 
-Not implemented: a frontend connected to the local API, staff MFA, controlled
-Excel import/reconciliation, complete order fulfilment, billing handoff,
-notifications, operational monitoring or a rehearsed backup/restore process.
-This means the application is not ready for real orders.
+Not implemented: controlled Excel import/reconciliation, complete order
+fulfilment, billing handoff, notifications, operational monitoring or a
+rehearsed backup/restore process. This means the application is not ready for
+real orders.
 
 ## 2. Provision staging and production
 

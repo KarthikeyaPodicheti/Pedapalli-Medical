@@ -2,7 +2,7 @@
 
 A mobile-first B2B pharmaceutical wholesale portal for verified medical stores. The public site is a synthetic product preview. The repository also contains a self-hosted Node.js/PostgreSQL production candidate with separate buyer/staff identities, protected pricing, buyer review, quarantined batch receiving, pharmacist release, FEFO reservations, and idempotent ordering.
 
-The current runtime uses repository code and PostgreSQL only; it does not depend on Supabase, Cloudflare, or another application API. Real checkout is disabled by default and the container frontend is not yet connected to the new API. Follow [the local runtime guide](docs/LOCAL_RUNTIME.md) and [PRODUCTION.md](PRODUCTION.md); do not use the GitHub Pages preview for real orders.
+The current runtime uses repository code and PostgreSQL only; it does not depend on Supabase, Cloudflare, or another application API. Its Docker build serves the connected buyer/staff portal, while GitHub Pages remains a synthetic preview. Real checkout is disabled by default. Follow [the local runtime guide](docs/LOCAL_RUNTIME.md) and [PRODUCTION.md](PRODUCTION.md); do not use the GitHub Pages preview for real orders.
 
 ## GitHub Pages preview
 
@@ -22,6 +22,7 @@ For the isolated local stack:
 ```sh
 export LOCAL_DB_PASSWORD="$(openssl rand -hex 24)"
 export LOCAL_API_PASSWORD="$(openssl rand -hex 24)"
+export LOCAL_MFA_KEY="$(openssl rand -hex 32)"
 docker compose up --build -d
 ```
 

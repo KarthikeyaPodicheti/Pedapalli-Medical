@@ -7,6 +7,8 @@ RUN --mount=type=secret,id=proxy_ca,required=true \
 COPY index.html tsconfig.json vite.config.ts ./
 COPY src ./src
 COPY public ./public
+ARG VITE_LOCAL_API=true
+ENV VITE_LOCAL_API=$VITE_LOCAL_API
 RUN npm run build
 
 FROM nginx:1.27-alpine

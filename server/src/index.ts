@@ -1,10 +1,11 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
 import pg from 'pg'
-import { createToken, digestToken, hashPassword, validatePassword, verifyPassword } from './security.js'
+import { createMfaSecret, createToken, decryptMfaSecret, digestToken, encryptMfaSecret, hashPassword, parseMfaKey, validatePassword, verifyPassword, verifyTotp } from './security.js'
 
 const {Pool}=pg
 const databaseUrl=process.env.DATABASE_URL
 const appOrigin=process.env.APP_ORIGIN
+const mfaKey=parseMfaKey(process.env.LOCAL_MFA_KEY??'')
 if(!databaseUrl)throw new Error('DATABASE_URL is required')
 if(!appOrigin)throw new Error('APP_ORIGIN is required')
 const originUrl=new URL(appOrigin)
@@ -17,7 +18,7 @@ const secureCookie=originUrl.protocol==='https:'
 const sessionCookie='pm_session'
 const dummyPasswordHash=await hashPassword('Timing protection only 2026!')
 
-type Session={id:string;email:string;accountType:'buyer'|'staff';staffRole:string|null;buyerId:string|null;buyerStatus:string|null}
+type Session={id:string;email:string;accountType:'buyer'|'staff';staffRole:string|null;buyerId:string|null;buyerStatus:string|null;mfaVerified:boolean;mfaEnabled:boolean}
 type Json=Record<string,unknown>
 
 function json(res:ServerResponse,status:number,body:unknown,cookies:string[]=[]){
@@ -40,13 +41,15 @@ function text(value:unknown,min:number,max:number,label:string){const normalized
 async function session(req:IncomingMessage):Promise<Session|null>{
   const token=cookies(req)[sessionCookie];if(!token)return null
   const result=await pool.query<Session>(`select u.id,u.email,u.account_type as "accountType",s.role as "staffRole",
-    b.id as "buyerId",b.status as "buyerStatus" from private.sessions x join private.users u on u.id=x.user_id
+    b.id as "buyerId",b.status as "buyerStatus",x.mfa_verified as "mfaVerified",coalesce(m.enabled,false) as "mfaEnabled"
+    from private.sessions x join private.users u on u.id=x.user_id
     left join public.staff_members s on s.user_id=u.id left join public.buyer_businesses b on b.user_id=u.id
+    left join private.staff_mfa m on m.user_id=u.id
     where x.token_hash=$1 and x.expires_at>now() and not u.disabled`,[digestToken(token)])
   return result.rows[0]??null
 }
 async function requireSession(req:IncomingMessage){const saved=await session(req);if(!saved)throw new HttpError(401,'Sign in required.');return saved}
-async function requireStaff(req:IncomingMessage,roles:string[]){const saved=await requireSession(req);if(saved.accountType!=='staff'||!saved.staffRole||!roles.includes(saved.staffRole))throw new HttpError(403,'Staff permission required.');return saved}
+async function requireStaff(req:IncomingMessage,roles:string[]){const saved=await requireSession(req);if(saved.accountType!=='staff'||!saved.staffRole||!roles.includes(saved.staffRole))throw new HttpError(403,'Staff permission required.');if(!saved.mfaVerified)throw new HttpError(403,'Staff MFA verification required.');return saved}
 
 async function consumeRateLimit(key:string){
   const result=await pool.query<{attempts:number}>(`insert into private.rate_limits(key,attempts,reset_at) values($1,1,now()+interval '15 minutes')
@@ -71,29 +74,60 @@ async function route(req:IncomingMessage,res:ServerResponse){
     json(res,202,{message:'If the email can be registered, the account is ready to sign in.'});return
   }
   if(req.method==='POST'&&url.pathname==='/api/auth/login'){
-    const data=await body(req),userEmail=email(data.email),password=String(data.password??'')
+    const data=await body(req),userEmail=email(data.email),password=String(data.password??''),mfaCode=String(data.mfaCode??'').trim()
     await consumeRateLimit(`login:${req.socket.remoteAddress}:${userEmail}`)
-    const found=await pool.query<{id:string;password_hash:string;disabled:boolean}>('select id,password_hash,disabled from private.users where email=$1',[userEmail])
+    if(Buffer.byteLength(password)>256)throw new HttpError(401,'Invalid email or password.')
+    const found=await pool.query<{id:string;password_hash:string;disabled:boolean;account_type:'buyer'|'staff';encrypted_secret:string|null;mfa_enabled:boolean}>(
+      `select u.id,u.password_hash,u.disabled,u.account_type,m.encrypted_secret,coalesce(m.enabled,false) mfa_enabled
+       from private.users u left join private.staff_mfa m on m.user_id=u.id where u.email=$1`,[userEmail])
     const candidate=found.rows[0]
     const valid=await verifyPassword(password,candidate?.password_hash??dummyPasswordHash)
     if(!candidate||candidate.disabled||!valid)throw new HttpError(401,'Invalid email or password.')
-    const token=createToken();await pool.query(`insert into private.sessions(token_hash,user_id,expires_at) values($1,$2,now()+interval '8 hours')`,[digestToken(token),candidate.id])
-    json(res,200,{ok:true},[cookie(token,8*60*60)]);return
+    if(candidate.account_type==='staff'&&candidate.mfa_enabled){
+      if(!mfaCode){json(res,200,{mfaRequired:true});return}
+      if(!candidate.encrypted_secret||!verifyTotp(decryptMfaSecret(candidate.encrypted_secret,mfaKey),mfaCode))throw new HttpError(401,'Invalid email, password or security code.')
+    }
+    const mfaVerified=candidate.account_type==='staff'&&candidate.mfa_enabled
+    const token=createToken();await pool.query(`insert into private.sessions(token_hash,user_id,expires_at,mfa_verified) values($1,$2,now()+interval '8 hours',$3)`,[digestToken(token),candidate.id,mfaVerified])
+    json(res,200,{ok:true,mfaSetupRequired:candidate.account_type==='staff'&&!candidate.mfa_enabled},[cookie(token,8*60*60)]);return
   }
   if(req.method==='POST'&&url.pathname==='/api/auth/logout'){
     const token=cookies(req)[sessionCookie];if(token)await pool.query('delete from private.sessions where token_hash=$1',[digestToken(token)])
     json(res,200,{ok:true},[cookie('',0)]);return
   }
   if(req.method==='GET'&&url.pathname==='/api/auth/session'){
-    const saved=await session(req);json(res,200,{account:saved?{email:saved.email,accountType:saved.accountType,staffRole:saved.staffRole,buyerStatus:saved.buyerStatus}:null});return
+    const saved=await session(req);json(res,200,{account:saved?{email:saved.email,accountType:saved.accountType,staffRole:saved.staffRole,buyerStatus:saved.buyerStatus,mfaVerified:saved.mfaVerified,mfaSetupRequired:saved.accountType==='staff'&&!saved.mfaEnabled}:null});return
+  }
+  if(req.method==='POST'&&url.pathname==='/api/staff/mfa/setup'){
+    const saved=await requireSession(req);if(saved.accountType!=='staff')throw new HttpError(403,'Staff account required.');if(saved.mfaEnabled)throw new HttpError(409,'MFA is already enabled.')
+    const existing=await pool.query<{encrypted_secret:string}>('select encrypted_secret from private.staff_mfa where user_id=$1',[saved.id])
+    const secret=existing.rows[0]?decryptMfaSecret(existing.rows[0].encrypted_secret,mfaKey):createMfaSecret()
+    if(!existing.rowCount)await pool.query(`insert into private.staff_mfa(user_id,encrypted_secret) values($1,$2)`,[saved.id,encryptMfaSecret(secret,mfaKey)])
+    const label=encodeURIComponent(`Pedapalli Medical:${saved.email}`),issuer=encodeURIComponent('Pedapalli Medical')
+    json(res,200,{manualKey:secret,otpauthUri:`otpauth://totp/${label}?secret=${secret}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`});return
+  }
+  if(req.method==='POST'&&url.pathname==='/api/staff/mfa/verify-setup'){
+    const saved=await requireSession(req);if(saved.accountType!=='staff')throw new HttpError(403,'Staff account required.')
+    const data=await body(req),code=String(data.code??'').trim(),token=cookies(req)[sessionCookie],client=await pool.connect()
+    try{
+      await client.query('begin')
+      const record=await client.query<{encrypted_secret:string;enabled:boolean}>('select encrypted_secret,enabled from private.staff_mfa where user_id=$1 for update',[saved.id])
+      if(!record.rowCount)throw new HttpError(409,'Start MFA setup first.')
+      if(!record.rows[0].enabled&&!verifyTotp(decryptMfaSecret(record.rows[0].encrypted_secret,mfaKey),code))throw new HttpError(400,'The security code is invalid or expired.')
+      await client.query('select public.enable_staff_mfa($1)',[saved.id])
+      await client.query('update private.sessions set mfa_verified=true where token_hash=$1 and user_id=$2',[digestToken(token),saved.id])
+      await client.query('commit')
+    }catch(error){await client.query('rollback');throw error}finally{client.release()}
+    json(res,200,{ok:true});return
   }
   if(req.method==='GET'&&url.pathname==='/api/catalog'){
     const saved=await session(req),canTrade=saved?.accountType==='staff'||saved?.buyerStatus==='approved'
-    const result=await pool.query(`select p.id,p.sku,p.name,p.composition,p.strength,p.pack_size,p.manufacturer,p.category,
+    const [result,settings]=await Promise.all([pool.query(`select p.id,p.sku,p.name,p.composition,p.strength,p.pack_size,p.manufacturer,p.category,
       p.wholesale_unit,p.units_per_case,p.minimum_order_quantity,p.quantity_step,p.mrp_paise,p.price_paise,
       p.regulatory_class,p.prescription_required,i.sellable_quantity from public.products p
-      join public.sellable_inventory i on i.product_id=p.id where p.active and p.pharmacist_approved order by p.name`)
-    json(res,200,{products:result.rows.map(row=>({...row,price_paise:canTrade?row.price_paise:null,sellable_quantity:canTrade?row.sellable_quantity:null})),canTrade});return
+      join public.sellable_inventory i on i.product_id=p.id where p.active and p.pharmacist_approved order by p.name`),
+      pool.query('select store_name,checkout_enabled,reservation_minutes,minimum_shelf_life_days,allowed_payment_methods,allowed_fulfilment_methods from public.store_settings where id=1')])
+    json(res,200,{products:result.rows.map(row=>({...row,price_paise:canTrade?row.price_paise:null,sellable_quantity:canTrade?row.sellable_quantity:null})),canTrade,settings:settings.rows[0]});return
   }
   if(req.method==='GET'&&url.pathname==='/api/buyer'){
     const saved=await requireSession(req);if(saved.accountType!=='buyer')throw new HttpError(403,'Buyer account required.')
@@ -145,6 +179,15 @@ async function route(req:IncomingMessage,res:ServerResponse){
   if(req.method==='GET'&&url.pathname==='/api/staff/inventory'){
     await requireStaff(req,['owner','inventory','pharmacist']);const result=await pool.query(`select b.*,p.sku,p.name,(b.on_hand-b.reserved) available
       from public.inventory_batches b join public.products p on p.id=b.product_id order by p.name,b.expiry_date,b.batch_number`);json(res,200,{batches:result.rows});return
+  }
+  if(req.method==='GET'&&url.pathname==='/api/staff/orders'){
+    await requireStaff(req,['owner','sales','dispatch','pharmacist'])
+    const result=await pool.query(`select o.*,b.legal_name,b.contact_name,b.phone,
+      coalesce(jsonb_agg(jsonb_build_object('sku',i.sku,'name',i.name,'pack_size',i.pack_size,'quantity',i.quantity,
+      'unit_price_paise',i.unit_price_paise,'line_total_paise',i.line_total_paise) order by i.name) filter(where i.id is not null),'[]') items
+      from public.orders o join public.buyer_businesses b on b.id=o.buyer_id left join public.order_items i on i.order_id=o.id
+      group by o.id,b.legal_name,b.contact_name,b.phone order by o.created_at desc limit 100`)
+    json(res,200,{orders:result.rows});return
   }
   if(req.method==='POST'&&url.pathname==='/api/staff/inventory/receipts'){
     const saved=await requireStaff(req,['owner','inventory']);const data=await body(req)

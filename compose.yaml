@@ -36,6 +36,7 @@ services:
     image: pedapalli-medical-api:local
     environment:
       DATABASE_URL: postgres://medical_api:${LOCAL_API_PASSWORD}@db:5432/medical
+      LOCAL_MFA_KEY: ${LOCAL_MFA_KEY:?Set LOCAL_MFA_KEY to 64 hexadecimal characters}
       APP_ORIGIN: http://localhost:8080
       HOST: 0.0.0.0
       PORT: 3000
@@ -60,6 +61,8 @@ services:
     build:
       context: .
       dockerfile: server/frontend.Dockerfile
+      args:
+        VITE_LOCAL_API: "true"
       secrets:
         - proxy_ca
     image: pedapalli-medical-web:local

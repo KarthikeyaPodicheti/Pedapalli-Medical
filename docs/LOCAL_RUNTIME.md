@@ -6,11 +6,12 @@ remains a synthetic preview and is not this runtime.
 
 ## Start
 
-Generate two different random passwords and export them for the current shell:
+Generate two different random passwords and one separate 32-byte MFA encryption key for the current shell:
 
 ```sh
 export LOCAL_DB_PASSWORD="$(openssl rand -hex 24)"
 export LOCAL_API_PASSWORD="$(openssl rand -hex 24)"
+export LOCAL_MFA_KEY="$(openssl rand -hex 32)"
 docker compose up --build -d
 curl http://localhost:8080/api/health
 ```
@@ -42,7 +43,11 @@ Input shape:
 ```
 
 Supported roles are `owner`, `sales`, `inventory`, `dispatch` and
-`pharmacist`. Buyer accounts cannot be turned into staff accounts.
+`pharmacist`. Buyer accounts cannot be turned into staff accounts. On first
+staff sign-in, the portal shows a manual time-based one-time-password (TOTP)
+key. Add it to an authenticator application and verify its six-digit code;
+staff operations remain blocked until this is complete. Store the manual key
+only in the authenticator app, not in a ticket, spreadsheet or chat.
 
 ## Implemented safety boundary
 
@@ -52,6 +57,9 @@ Supported roles are `owner`, `sales`, `inventory`, `dispatch` and
 - Reservations are atomic, cart-wide and allocated FEFO.
 - Buyer cancellation and reservation expiry release each allocation once.
 - The database serializes competing last-stock orders.
+- The connected Docker portal supports buyer registration/application/status,
+  approved catalogue/cart/order history and role-scoped staff operations.
+- Staff must complete TOTP MFA before protected operations are available.
 - Real checkout defaults to disabled.
 
 The proposed default minimum shelf life is 180 days and remains configurable.
@@ -68,9 +76,10 @@ docker compose build
 ```
 
 `test:local-stack` builds the containers, migrates a disposable database,
-checks registration, sign-in, buyer application, protected catalog access and
-the disabled-checkout boundary, then removes the test volume.
+checks buyer registration/application, protected catalogue access, the
+disabled-checkout boundary, staff TOTP MFA enrollment/login and the connected
+portal in desktop and mobile browsers, then removes the test volume.
 
-Do not enable real ordering yet. Staff MFA, the connected local frontend,
-controlled Excel import, backup/restore rehearsal, real inventory reconciliation
-and client acceptance remain launch gates.
+Do not enable real ordering yet. Controlled Excel import, backup/restore
+rehearsal, real inventory reconciliation, order fulfilment/billing handoff and
+client acceptance remain launch gates.

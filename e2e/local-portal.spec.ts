@@ -1,0 +1,30 @@
+import { expect, test } from '@playwright/test'
+
+test('a buyer can register, sign in and submit a real pending application',async({page},testInfo)=>{
+  const suffix=testInfo.project.name.replace(/[^a-z]/g,'').slice(-8)
+  const email=`ui-${suffix}@example.in`
+  const errors:string[]=[]
+  page.on('pageerror',error=>errors.push(error.message))
+  await page.goto('/')
+  await expect(page.getByRole('heading',{name:'One safe ordering desk for your medical store.'})).toBeVisible()
+  await page.getByRole('button',{name:'Create buyer account'}).click()
+  await page.getByLabel('Email').fill(email)
+  await page.getByLabel('Password').fill('Synthetic buyer password 2026!')
+  await page.getByRole('button',{name:'Create account'}).click()
+  await expect(page.getByText('Buyer account created.')).toBeVisible()
+  await page.getByLabel('Email').fill(email)
+  await page.getByLabel('Password').fill('Synthetic buyer password 2026!')
+  await page.getByRole('button',{name:'Sign in securely'}).click()
+  await expect(page.getByRole('heading',{name:'Tell us about your medical store'})).toBeVisible()
+  await page.getByLabel('Business or trading name').fill('UI Test Medical Store')
+  await page.getByLabel('Contact person').fill('UI Buyer')
+  await page.getByLabel('Indian mobile number').fill('9876543212')
+  await expect(page.getByLabel('GSTIN (optional)')).not.toHaveAttribute('required')
+  await page.getByLabel('Drug-licence number').fill(`DL-UI-${suffix}`)
+  await page.getByLabel('PIN code').fill('505172')
+  await page.getByLabel('Registered business address').fill('Market Road, Peddapalli, Telangana')
+  await page.getByRole('button',{name:'Submit for verification'}).click()
+  await expect(page.getByRole('heading',{name:'Verification pending'})).toBeVisible()
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)
+  expect(errors).toEqual([])
+})

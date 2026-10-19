@@ -317,6 +317,8 @@ Until these decisions and the production gates are complete, keep the existing d
 - Made quarantined batches the inventory source of truth, with pharmacist
   release, minimum shelf life, FEFO reservation, idempotency, concurrency
   protection and exactly-once release.
-- Added disposable database and whole-stack tests; checkout remains disabled.
-- Next phase: connect the React buyer/staff experience to this API, then build
-  the controlled Excel import and opening-stock reconciliation workflow.
+- Added the connected React buyer/staff portal and staff TOTP MFA; checkout
+  remains disabled.
+- Added disposable database, API, MFA and desktop/mobile whole-stack tests.
+- Next phase: build the controlled Excel import and opening-stock reconciliation
+  workflow.

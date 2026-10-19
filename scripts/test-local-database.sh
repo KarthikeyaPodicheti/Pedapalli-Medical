@@ -14,7 +14,9 @@ for _ in {1..60}; do
 done
 if [[ "$ready" != true ]];then docker logs "$container_name" >&2;exit 1;fi
 
-docker exec -i "$container_name" psql -U postgres -v ON_ERROR_STOP=1 < "$repo_root/server/sql/001_core.sql"
+for migration in "$repo_root"/server/sql/*.sql;do
+  docker exec -i "$container_name" psql -U postgres -v ON_ERROR_STOP=1 < "$migration"
+done
 docker exec -i "$container_name" psql -U postgres -v ON_ERROR_STOP=1 < "$repo_root/server/tests/batch_core.sql"
 
 race_order(){
