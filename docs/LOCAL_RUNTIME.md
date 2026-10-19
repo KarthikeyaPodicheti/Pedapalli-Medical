@@ -51,6 +51,32 @@ only in the authenticator app, not in a ticket, spreadsheet or chat.
 
 ## Implemented safety boundary
 
+### Account recovery and access removal
+
+The offline `admin.js` command also accepts `reset-password`, `reset-staff-mfa`
+and `disable-account`. Each requires email, named operator and a meaningful
+reason; password reset additionally requires a new strong password. Use the same
+private input-file procedure as account creation. All three revoke every session
+and write an audit event. Password reset preserves MFA; lost-authenticator reset
+requires reenrollment. Reset does not reactivate a disabled account.
+
+Verify the person's identity through the client-approved manual process before
+recovery. Keep the privileged host/migration credentials with designated operators.
+Never put passwords, authenticator secrets or recovery inputs in tickets or Git.
+Users can also choose **Sign out everywhere** from an authenticated session.
+
+Login/registration limits apply independently to the account and client address;
+password computation is capped at four concurrent jobs per API process. The
+Compose API trusts `X-Real-IP` only because its port is private and Nginx overwrites
+that header. Do not expose the API directly with `TRUST_PROXY=true`, or trust
+client-supplied forwarded headers at another proxy. Review limits under realistic
+shared-network usage before launch.
+
+### Controlled imports
+
+See `CONTROLLED_IMPORTS.md` for CSV/XLSX preview, atomic application, quarantine,
+independent physical-count reconciliation and remaining client-data gates.
+
 - New receipts are additive, idempotent and quarantined by default.
 - Only a pharmacist role can release a quarantined batch to sellable stock.
 - Catalog availability comes from eligible batch balances, not product stock.
@@ -80,6 +106,6 @@ checks buyer registration/application, protected catalogue access, the
 disabled-checkout boundary, staff TOTP MFA enrollment/login and the connected
 portal in desktop and mobile browsers, then removes the test volume.
 
-Do not enable real ordering yet. Controlled Excel import, backup/restore
+Do not enable real ordering yet. Client acceptance of controlled imports, backup/restore
 rehearsal, real inventory reconciliation, order fulfilment/billing handoff and
 client acceptance remain launch gates.

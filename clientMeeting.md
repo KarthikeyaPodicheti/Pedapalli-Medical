@@ -50,6 +50,13 @@ These operational details still require client answers; do not invent commitment
 
 ### Catalog, pricing, and inventory
 
+- [ ] Map the real spreadsheet to template v1 (`docs/CONTROLLED_IMPORTS.md`),
+  especially stock units, text expiry dates and integer-paise prices.
+- [ ] Name the inventory operator and independent owner who will physically count
+  imported batches; confirm the discrepancy investigation/adjustment process.
+- [ ] Confirm account-recovery identity checks, authorized host operators and
+  how temporary replacement passwords are handed over securely.
+
 - [ ] Obtain a sanitized sample of the real inventory spreadsheet and column definitions.
 - [ ] What is the stable product identifier: internal SKU, barcode, product code, or combination?
 - [ ] Which product fields are available: brand, manufacturer, composition, strength, dosage form, pack, case size, MRP, HSN, GST, batch, and expiry?

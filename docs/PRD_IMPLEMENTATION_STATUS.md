@@ -96,3 +96,45 @@ one security increment, not completion of the security phase or a production
 release. Login abuse controls, recovery/session lifecycle review, controlled
 imports and the remaining production roadmap still require implementation and
 acceptance. Checkout remains disabled; no production data or settings changed.
+
+## Authentication and controlled imports — 19 October 2026
+
+Implemented account/address login limits with proxy-header overwrite, bounded
+password computation, structured-body validation, audited privileged password/MFA
+recovery and account removal, session revocation and user-facing global logout.
+Session issuance now serializes against privileged recovery and rejects changed
+credentials/security state. Inventory/dispatch users start on their allowed tabs.
+
+Implemented template-v1 CSV/XLSX import for existing SKUs: exact units and paise,
+server validation, canonical content checksum, persisted previews, preview version
+checks, 24-hour expiry, stock/price conflict detection, atomic idempotent apply,
+quarantine and audited independent owner physical-count reconciliation. Receiving
+now shares product locks with orders/imports and rejects additions to released
+batches. See `CONTROLLED_IMPORTS.md` and `SECURITY_IMPORT_RELEASE.md`.
+
+| Final command | Exit | Evidence |
+| --- | --- | --- |
+| `npm run build` | 0 | TypeScript/Vite passed; existing mixed-import and ExcelJS chunk warnings remain. |
+| `npm test -- --run` | 0 | 11 frontend tests passed. |
+| `npm run test:server` | 0 | 7 security/import validation tests passed. |
+| `npm run test:local-db` | 0 | Batch invariants, stale/versioned import rejection, duplicate apply, reconciliation, session issuance and last-stock race passed. |
+| `npm run test:e2e` | 0 | 8 synthetic desktop/mobile journeys passed. |
+| `npm run test:local-stack` | 0 on rerun | API import concurrent apply, permission denial, malformed body, login limits, password/MFA recovery and global logout passed; 4 connected browser journeys passed, including desktop CSV and mobile XLSX import. |
+| `git diff --check` | 0 | No whitespace errors. |
+
+Development failures resolved: the first server compile exited 2 for optional
+operator/reason fields in the admin command; the initial database run exited 3
+for a missing SQL dollar-quote terminator. Both were corrected and rerun. The first
+new full-stack browser run exited 1: both staff import tests timed out waiting for
+Batch inventory because the test cookie used 127.0.0.1 while Playwright opened
+localhost. The corrected cookie fixture passed both journeys. No environment
+blocker remains for these checks.
+
+Dependencies were already installed. Docker builds installed/pruned server
+dependencies and compiled the final API. All databases in these checks were
+disposable; no real checkout, client data or production migration was activated.
+
+Remaining: catalog creation/approval UI, audited stock discrepancy adjustments,
+client spreadsheet mapping and independent reviewer assignment, full order and
+billing operations, backup/restore rehearsal, deployment/monitoring and client
+acceptance. These increments do not certify the whole product production-ready.

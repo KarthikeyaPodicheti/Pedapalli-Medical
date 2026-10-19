@@ -40,6 +40,7 @@ services:
       APP_ORIGIN: http://localhost:8080
       HOST: 0.0.0.0
       PORT: 3000
+      TRUST_PROXY: "true"
     depends_on:
       migrate:
         condition: service_completed_successfully

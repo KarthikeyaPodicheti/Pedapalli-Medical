@@ -7,6 +7,7 @@ export type LocalProduct={id:string;sku:string;name:string;composition:string;st
 export type LocalBuyer={id:string;legal_name:string;contact_name:string;phone:string;gstin:string|null;drug_licence_number:string;registered_address:string;pincode:string;status:string;review_note:string|null;created_at:string}
 export type LocalOrder={id:string;reference:string;status:string;payment_method:string;fulfilment_method:string;total_paise:number;reservation_expires_at:string;created_at:string;legal_name?:string;contact_name?:string;phone?:string;items:{sku:string;name:string;pack_size?:string;quantity:number;unit_price_paise:number;line_total_paise:number}[]}
 export type LocalBatch={id:string;product_id:string;sku:string;name:string;batch_number:string;expiry_date:string;on_hand:number;reserved:number;available:number;status:string;received_on:string;supplier_reference:string|null}
+export type InventoryImport={id:string;preview_version:string;source_reference:string;checksum:string;mode:'opening'|'receipt';status:'preview'|'applied'|'reconciled';created_at:string;applied_at:string|null;reconciled_at:string|null;rows:{sku:string;name:string;wholesale_unit:string;batch_number:string;expiry_date:string;quantity:number;price_paise:number;mrp_paise:number;before:{price_paise:number;mrp_paise:number;batch:{on_hand:number;reserved:number;status:string}|null}}[]}
 
 async function request<T>(path:string,options:RequestInit={}){
   const response=await fetch(path,{credentials:'same-origin',...options,headers:{...(options.body?{'Content-Type':'application/json'}:{}),...options.headers}})
@@ -21,6 +22,7 @@ export const localApi={
   register:(email:string,password:string)=>post<{message:string}>('/api/auth/register',{email,password}),
   login:(email:string,password:string,mfaCode='')=>post<{ok?:boolean;mfaRequired?:boolean;mfaSetupRequired?:boolean}>('/api/auth/login',{email,password,mfaCode}),
   logout:()=>post<{ok:boolean}>('/api/auth/logout',{}),
+  logoutAll:()=>post<{ok:boolean}>('/api/auth/logout-all',{}),
   catalog:()=>request<{products:LocalProduct[];canTrade:boolean;settings:LocalSettings}>('/api/catalog'),
   buyer:()=>request<{buyer:LocalBuyer|null}>('/api/buyer'),
   apply:(data:Record<string,string>)=>post<{ok:boolean}>('/api/buyer',data),
@@ -35,4 +37,8 @@ export const localApi={
   receive:(sourceReference:string,lines:{line_key:string;product_id:string;batch_number:string;expiry_date:string;quantity:number}[])=>post<{saved:number}>('/api/staff/inventory/receipts',{sourceReference,lines}),
   releaseBatch:(id:string)=>post<{ok:boolean}>(`/api/staff/inventory/batches/${id}/release`,{}),
   staffOrders:()=>request<{orders:LocalOrder[]}>('/api/staff/orders'),
+  inventoryImports:()=>request<{imports:InventoryImport[]}>('/api/staff/inventory/imports'),
+  previewImport:(sourceReference:string,mode:string,rows:string[][])=>post<{import:InventoryImport}>('/api/staff/inventory/imports/preview',{sourceReference,mode,rows}),
+  applyImport:(id:string,previewVersion:string)=>post<{ok:boolean}>(`/api/staff/inventory/imports/${id}/apply`,{previewVersion}),
+  reconcileImport:(id:string,counts:number[],note:string)=>post<{ok:boolean}>(`/api/staff/inventory/imports/${id}/reconcile`,{counts,note}),
 }

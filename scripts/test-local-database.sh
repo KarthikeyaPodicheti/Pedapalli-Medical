@@ -18,6 +18,7 @@ for migration in "$repo_root"/server/sql/*.sql;do
   docker exec -i "$container_name" psql -U postgres -v ON_ERROR_STOP=1 < "$migration"
 done
 docker exec -i "$container_name" psql -U postgres -v ON_ERROR_STOP=1 < "$repo_root/server/tests/batch_core.sql"
+docker exec -i "$container_name" psql -U postgres -v ON_ERROR_STOP=1 < "$repo_root/server/tests/imports.sql"
 
 race_order(){
   local buyer="$1" key="$2"

@@ -19,6 +19,12 @@ evidence and unresolved launch gates; do not equate a successful build with
 production readiness. Under the current no-external-API decision, notifications
 use in-app status and a documented manual process; provider automation is deferred.
 
+For inventory imports, read `docs/CONTROLLED_IMPORTS.md`. Template v1 supports
+existing SKUs with explicit wholesale units, batch/expiry and integer-paise prices.
+Never auto-create or approve medicines from stock rows, overwrite live balances,
+skip preview version checks, or treat import reconciliation as whole-store launch
+approval. Keep additive receipts quarantined and require independent physical counts.
+
 # Project brief
 
 Build a production-ready, sellable B2B pharmaceutical wholesale portal for one medicine wholesaler in Peddapalli, Telangana. The first customers are medical-store businesses—not individual consumers. B2C is a separate future phase and must not shape or weaken the first B2B release.

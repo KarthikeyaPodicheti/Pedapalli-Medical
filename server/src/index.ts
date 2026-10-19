@@ -1,5 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
 import pg from 'pg'
+import { isIP } from 'node:net'
+import { validateImportRows } from './imports.js'
 import { createMfaSecret, createToken, decryptMfaSecret, digestToken, encryptMfaSecret, hashPassword, parseMfaKey, validatePassword, verifyPassword, verifyTotp } from './security.js'
 
 const {Pool}=pg
@@ -29,13 +31,13 @@ function json(res:ServerResponse,status:number,body:unknown,cookies:string[]=[])
 }
 function cookie(token:string,maxAge:number){return `${sessionCookie}=${token}; Path=/api; HttpOnly; SameSite=Strict; Max-Age=${maxAge}${secureCookie?'; Secure':''}`}
 function cookies(req:IncomingMessage){return Object.fromEntries((req.headers.cookie??'').split(';').map(v=>v.trim()).filter(Boolean).map(v=>{const at=v.indexOf('=');return [v.slice(0,at),v.slice(at+1)]}))}
-async function body(req:IncomingMessage){
+async function body(req:IncomingMessage,limit=64*1024){
   if(!(req.headers['content-type']??'').toLowerCase().startsWith('application/json'))throw new HttpError(415,'Use application/json.')
-  let raw='';for await(const chunk of req){raw+=chunk;if(Buffer.byteLength(raw)>64*1024)throw new HttpError(413,'Request is too large.')}
-  try{return JSON.parse(raw||'{}') as Json}catch{throw new HttpError(400,'Invalid JSON.')}
+  let raw='';for await(const chunk of req){raw+=chunk;if(Buffer.byteLength(raw)>limit)throw new HttpError(413,'Request is too large.')}
+  try{const parsed:unknown=JSON.parse(raw||'{}');if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw new Error();return parsed as Json}catch{throw new HttpError(400,'A JSON object is required.')}
 }
 class HttpError extends Error{constructor(public status:number,message:string){super(message)}}
-function email(value:unknown){const normalized=String(value??'').trim().toLowerCase();if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized))throw new HttpError(400,'Enter a valid email.');return normalized}
+function email(value:unknown){const normalized=String(value??'').trim().toLowerCase();if(normalized.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized))throw new HttpError(400,'Enter a valid email.');return normalized}
 function text(value:unknown,min:number,max:number,label:string){const normalized=String(value??'').trim();if(normalized.length<min||normalized.length>max)throw new HttpError(400,`${label} is invalid.`);return normalized}
 
 async function session(req:IncomingMessage):Promise<Session|null>{
@@ -51,12 +53,26 @@ async function session(req:IncomingMessage):Promise<Session|null>{
 async function requireSession(req:IncomingMessage){const saved=await session(req);if(!saved)throw new HttpError(401,'Sign in required.');return saved}
 async function requireStaff(req:IncomingMessage,roles:string[]){const saved=await requireSession(req);if(saved.accountType!=='staff'||!saved.staffRole||!roles.includes(saved.staffRole))throw new HttpError(403,'Staff permission required.');if(!saved.mfaVerified)throw new HttpError(403,'Staff MFA verification required.');return saved}
 
-async function consumeRateLimit(key:string){
+async function consumeRateLimit(key:string,limit=10){
   const result=await pool.query<{attempts:number}>(`insert into private.rate_limits(key,attempts,reset_at) values($1,1,now()+interval '15 minutes')
     on conflict(key) do update set attempts=case when private.rate_limits.reset_at<=now() then 1 else private.rate_limits.attempts+1 end,
       reset_at=case when private.rate_limits.reset_at<=now() then now()+interval '15 minutes' else private.rate_limits.reset_at end
     returning attempts`,[digestToken(key)])
-  if(result.rows[0].attempts>10)throw new HttpError(429,'Too many attempts. Try again later.')
+  if(result.rows[0].attempts>limit)throw new HttpError(429,'Too many attempts. Try again later.')
+}
+
+async function authRateLimit(req:IncomingMessage,action:string,userEmail:string){
+  // Trust this header only on a private API network behind our overwriting proxy.
+  const forwarded=req.headers['x-real-ip']
+  const address=process.env.TRUST_PROXY==='true'&&typeof forwarded==='string'&&isIP(forwarded)?forwarded:req.socket.remoteAddress
+  await consumeRateLimit(`${action}:address:${address}`,60)
+  await consumeRateLimit(`${action}:account:${userEmail}`)
+}
+let activePasswordJobs=0
+async function passwordWork<T>(work:()=>Promise<T>){
+  if(activePasswordJobs>=4)throw new HttpError(503,'Sign-in is busy. Try again shortly.')
+  activePasswordJobs++
+  try{return await work()}finally{activePasswordJobs--}
 }
 
 async function route(req:IncomingMessage,res:ServerResponse){
@@ -67,32 +83,40 @@ async function route(req:IncomingMessage,res:ServerResponse){
 
   if(req.method==='POST'&&url.pathname==='/api/auth/register'){
     const data=await body(req),userEmail=email(data.email),password=String(data.password??'')
-    await consumeRateLimit(`register:${req.socket.remoteAddress}:${userEmail}`)
+    await authRateLimit(req,'register',userEmail)
     try{validatePassword(password)}catch{throw new HttpError(400,'Password must be 12 to 256 characters.')}
-    const passwordHash=await hashPassword(password)
+    const passwordHash=await passwordWork(()=>hashPassword(password))
     await pool.query(`insert into private.users(email,password_hash,account_type) values($1,$2,'buyer') on conflict(email) do nothing`,[userEmail,passwordHash])
     json(res,202,{message:'If the email can be registered, the account is ready to sign in.'});return
   }
   if(req.method==='POST'&&url.pathname==='/api/auth/login'){
     const data=await body(req),userEmail=email(data.email),password=String(data.password??''),mfaCode=String(data.mfaCode??'').trim()
-    await consumeRateLimit(`login:${req.socket.remoteAddress}:${userEmail}`)
+    await authRateLimit(req,'login',userEmail)
     if(Buffer.byteLength(password)>256)throw new HttpError(401,'Invalid email or password.')
     const found=await pool.query<{id:string;password_hash:string;disabled:boolean;account_type:'buyer'|'staff';encrypted_secret:string|null;mfa_enabled:boolean}>(
       `select u.id,u.password_hash,u.disabled,u.account_type,m.encrypted_secret,coalesce(m.enabled,false) mfa_enabled
        from private.users u left join private.staff_mfa m on m.user_id=u.id where u.email=$1`,[userEmail])
     const candidate=found.rows[0]
-    const valid=await verifyPassword(password,candidate?.password_hash??dummyPasswordHash)
+    const valid=await passwordWork(()=>verifyPassword(password,candidate?.password_hash??dummyPasswordHash))
     if(!candidate||candidate.disabled||!valid)throw new HttpError(401,'Invalid email or password.')
     if(candidate.account_type==='staff'&&candidate.mfa_enabled){
       if(!mfaCode){json(res,200,{mfaRequired:true});return}
       if(!candidate.encrypted_secret||!verifyTotp(decryptMfaSecret(candidate.encrypted_secret,mfaKey),mfaCode))throw new HttpError(401,'Invalid email, password or security code.')
     }
     const mfaVerified=candidate.account_type==='staff'&&candidate.mfa_enabled
-    const token=createToken();await pool.query(`insert into private.sessions(token_hash,user_id,expires_at,mfa_verified) values($1,$2,now()+interval '8 hours',$3)`,[digestToken(token),candidate.id,mfaVerified])
+    const token=createToken()
+    const issued=await pool.query('select public.issue_session($1,$2,$3,$4,$5) ok',[candidate.id,candidate.password_hash,digestToken(token),mfaVerified,candidate.encrypted_secret])
+    if(!issued.rows[0].ok)throw new HttpError(401,'Account security changed. Sign in again.')
     json(res,200,{ok:true,mfaSetupRequired:candidate.account_type==='staff'&&!candidate.mfa_enabled},[cookie(token,8*60*60)]);return
   }
   if(req.method==='POST'&&url.pathname==='/api/auth/logout'){
     const token=cookies(req)[sessionCookie];if(token)await pool.query('delete from private.sessions where token_hash=$1',[digestToken(token)])
+    json(res,200,{ok:true},[cookie('',0)]);return
+  }
+  if(req.method==='POST'&&url.pathname==='/api/auth/logout-all'){
+    const saved=await requireSession(req)
+    if(saved.accountType==='staff'&&!saved.mfaVerified)throw new HttpError(403,'Staff MFA verification required.')
+    await pool.query('delete from private.sessions where user_id=$1',[saved.id])
     json(res,200,{ok:true},[cookie('',0)]);return
   }
   if(req.method==='GET'&&url.pathname==='/api/auth/session'){
@@ -186,6 +210,33 @@ async function route(req:IncomingMessage,res:ServerResponse){
     await requireStaff(req,['owner','inventory','pharmacist']);const result=await pool.query(`select b.*,p.sku,p.name,(b.on_hand-b.reserved) available
       from public.inventory_batches b join public.products p on p.id=b.product_id order by p.name,b.expiry_date,b.batch_number`);json(res,200,{batches:result.rows});return
   }
+  if(req.method==='GET'&&url.pathname==='/api/staff/inventory/imports'){
+    await requireStaff(req,['owner','inventory','pharmacist'])
+    const result=await pool.query('select * from public.inventory_imports order by created_at desc limit 20')
+    json(res,200,{imports:result.rows});return
+  }
+  if(req.method==='POST'&&url.pathname==='/api/staff/inventory/imports/preview'){
+    const saved=await requireStaff(req,['owner','inventory']);await consumeRateLimit(`imports:${saved.id}`,30)
+    const data=await body(req,256*1024)
+    let rows:ReturnType<typeof validateImportRows>
+    try{rows=validateImportRows(data.rows)}catch(error){throw new HttpError(400,error instanceof Error?error.message:'Invalid import.')}
+    const mode=text(data.mode,1,20,'Import mode'),source=text(data.sourceReference,3,120,'Source reference')
+    const checksum=digestToken(JSON.stringify({mode,rows}))
+    const result=await pool.query('select public.preview_inventory_import($1,$2,$3,$4,$5::jsonb) id',[saved.id,source,checksum,mode,JSON.stringify(rows)])
+    const preview=await pool.query('select * from public.inventory_imports where id=$1',[result.rows[0].id])
+    json(res,200,{import:preview.rows[0]});return
+  }
+  const importAction=url.pathname.match(/^\/api\/staff\/inventory\/imports\/([0-9a-f-]{36})\/(apply|reconcile)$/)
+  if(req.method==='POST'&&importAction){
+    const action=importAction[2],saved=await requireStaff(req,action==='apply'?['owner','inventory']:['owner'])
+    if(action==='apply'){const data=await body(req);await pool.query('select public.apply_inventory_import($1,$2,$3)',[saved.id,importAction[1],text(data.previewVersion,36,36,'Preview version')])}
+    else{
+      const data=await body(req)
+      if(!Array.isArray(data.counts)||data.counts.length<1||data.counts.length>500||data.counts.some(value=>!Number.isInteger(value)||Number(value)<0||Number(value)>999999))throw new HttpError(400,'Enter 1 to 500 non-negative whole physical counts.')
+      await pool.query('select public.reconcile_inventory_import($1,$2,$3::jsonb,$4)',[saved.id,importAction[1],JSON.stringify(data.counts),text(data.note,10,500,'Reconciliation note')])
+    }
+    json(res,200,{ok:true});return
+  }
   if(req.method==='GET'&&url.pathname==='/api/staff/orders'){
     await requireStaff(req,['owner','sales','dispatch','pharmacist'])
     const result=await pool.query(`select o.*,b.legal_name,b.contact_name,b.phone,
@@ -209,12 +260,13 @@ async function route(req:IncomingMessage,res:ServerResponse){
 const server=createServer((req,res)=>{void route(req,res).catch(error=>{
   if(error instanceof HttpError){json(res,error.status,{error:error.message});return}
   const code=typeof error==='object'&&error&&'code' in error?String(error.code):'UNEXPECTED'
+  if(code==='P0001'&&req.url?.startsWith('/api/staff/inventory/')){json(res,409,{error:error.message});return}
   process.stderr.write(`Request failed: ${code}\n`);json(res,500,{error:'The request could not be completed.'})
 })})
 
 const roleCheck=await pool.query<{rolsuper:boolean;rolbypassrls:boolean}>("select rolsuper,rolbypassrls from pg_roles where rolname=current_user")
 if(!roleCheck.rowCount||roleCheck.rows[0].rolsuper||roleCheck.rows[0].rolbypassrls)throw new Error('API database role must not be privileged')
 server.listen(port,host,()=>process.stdout.write(`Local API listening on ${host}:${port}\n`))
-const cleanup=setInterval(()=>{void pool.query("delete from private.sessions where expires_at<=now(); delete from private.rate_limits where reset_at<=now()")},60_000)
+const cleanup=setInterval(()=>{void pool.query("delete from private.sessions where expires_at<=now(); delete from private.rate_limits where reset_at<=now()").catch(()=>process.stderr.write('Session cleanup failed\n'))},60_000)
 cleanup.unref()
 for(const signal of ['SIGINT','SIGTERM'] as const)process.on(signal,()=>{server.close(()=>{void pool.end().finally(()=>process.exit(0))})})

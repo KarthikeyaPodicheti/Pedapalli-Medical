@@ -12,7 +12,11 @@ permission-checked buyer review, protected prices/stock, quarantined batch
 receiving, pharmacist release, minimum shelf-life eligibility, atomic FEFO
 reservation, idempotency, cancellation/expiry release and audit records.
 
-Not implemented: controlled Excel import/reconciliation, complete order
+Controlled CSV/XLSX import for existing SKUs, audited recovery/session revocation
+and independent import reconciliation are implemented and require client staging
+acceptance. See `docs/CONTROLLED_IMPORTS.md` for the supported template and limits.
+
+Not implemented: catalog onboarding/approval UI, stock discrepancy adjustments, complete order
 fulfilment, billing handoff, notifications, operational monitoring or a
 rehearsed backup/restore process. This means the application is not ready for
 real orders.

@@ -332,5 +332,11 @@ Until these decisions and the production gates are complete, keep the existing d
 - Retired the unused hosted-backend prototype, its deployment jobs and legacy
   tests. The public site is now browser-only demo code; the connected local
   runtime is the sole backend implementation.
-- Current phase: harden staff MFA enrollment and authorization with regression
-  coverage, then build controlled Excel import and opening-stock reconciliation.
+- Added account/address login limits, bounded password computation, audited
+  offline recovery/access removal and global session logout.
+- Added CSV/XLSX template v1 for existing SKUs, validated server previews,
+  version/conflict checks, atomic idempotent apply, quarantined receipts,
+  audit history and independent physical-count reconciliation.
+- Next: catalog onboarding/approval and discrepancy adjustment workflows, then
+  complete order operations. Real spreadsheet mapping, security review under
+  representative load, staging recovery and client acceptance remain open gates.

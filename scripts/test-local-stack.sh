@@ -91,9 +91,14 @@ request 200 "$results_dir/mfa-required.json" -X POST http://127.0.0.1:8080/api/a
   --data '{"email":"owner@example.in","password":"Synthetic owner password 2026!"}'
 if ! grep -q '"mfaRequired":true' "$results_dir/mfa-required.json";then echo 'Established staff MFA was not required on login' >&2;exit 1;fi
 mfa_code="$(node server/tests/totp-code.mjs < "$results_dir/mfa-setup.json")"
-request 200 "$results_dir/staff-mfa-login.json" -X POST http://127.0.0.1:8080/api/auth/login \
+request 200 "$results_dir/staff-mfa-login.json" -c "$results_dir/staff-mfa-cookies.txt" -X POST http://127.0.0.1:8080/api/auth/login \
   -H 'Origin: http://localhost:8080' -H 'Content-Type: application/json' \
   --data "{\"email\":\"owner@example.in\",\"password\":\"Synthetic owner password 2026!\",\"mfaCode\":\"$mfa_code\"}"
-LOCAL_PORTAL=1 npx playwright test
+node server/tests/operational-api.mjs "$project_name" "$results_dir"
+LOCAL_TEST_STAFF_COOKIE_FILE="$results_dir/staff-mfa-cookies.txt" LOCAL_PORTAL=1 npx playwright test
+
+printf '%s' '{"action":"reset-staff-mfa","email":"owner@example.in","operator":"integration test","reason":"Verify lost authenticator recovery revokes sessions"}' \
+  | docker compose -p "$project_name" run --rm -T migrate node dist/admin.js > "$results_dir/recovery.txt"
+request 401 "$results_dir/recovered-staff-denied.json" -b "$results_dir/staff-mfa-cookies.txt" http://127.0.0.1:8080/api/staff/buyers
 
 echo 'Local container-stack integration checks passed'
