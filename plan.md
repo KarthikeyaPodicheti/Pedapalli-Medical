@@ -67,6 +67,11 @@ Account states are `submitted`, `under_review`, `approved`, `rejected`, `suspend
 
 ### Staff experience and roles
 
+Buyer and staff identities are separate security realms. A buyer account cannot
+be assigned a staff role or open the admin workspace; staff use distinct,
+individually assigned accounts. Hiding the staff link is only a UX measure—the
+database must enforce this boundary for every protected read and mutation.
+
 - **Owner/admin:** staff access, buyer approval policy, store settings, integrations, and all reports.
 - **Sales:** buyer review, order review, customer support, confirmation, and rejection.
 - **Inventory:** catalog, price, MOQ, stock imports, reconciliation, batch/expiry visibility, and availability.

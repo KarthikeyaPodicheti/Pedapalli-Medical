@@ -49,3 +49,19 @@ Added migrations `202610110003_receipt_idempotency.sql`, `202610110004_buyer_pen
 **Still required to meet the PRD MVP:** live batch-aware atomic checkout and cancellation/expiry ledger; authoritative sellable catalog stock; controlled Excel cutover with representative client data and opening-order reconciliation; same-ledger staff-assisted orders; full picking/packing/dispatch and shortage review; proper staff RBAC UI and verified approval evidence; inventory import mode split and unit normalization; return disposition; reporting/KPIs; payment and billing handoff; notification templates/provider configuration; concurrency/security/E2E tests and actual CI evidence.
 
 **Client sign-off blockers:** legal/regulatory and pharmacist rules, unit conversions, minimum shelf-life, exact Excel format, GST/invoice handoff, payment/fulfilment policy, notification sender/templates, staff identities, and acceptance of reconciled opening stock. Do not claim full PRD completion or enable checkout before these are resolved.
+
+## Buyer/admin access separation — 19 October 2026
+
+- Buyer sessions no longer show staff-portal navigation, and direct access to
+  `#admin` renders an explicit denial without loading the admin preview.
+- PostgreSQL now rejects any Auth user assigned to both `buyer_users` and
+  `staff_members`. Staff helper functions also deny privileges to a buyer
+  identity, providing defense in depth for every existing RLS policy and RPC.
+- Valid staff accounts retain access through individually assigned roles.
+- Verification: `npm run build` (exit 0), `npm test -- --run` (exit 0; 11
+  tests), `npm run test:db` (exit 0, including buyer/staff separation and
+  concurrent last-stock checks), and `npm run test:e2e` (exit 0; 8 desktop and
+  mobile tests). The first new database test run exited 3 because the test
+  assertion directly referenced the private `auth` schema as `authenticated`;
+  the assertion was corrected to use the RLS-visible row count and the full
+  suite then passed.

@@ -16,6 +16,7 @@ Use this document during client meetings. Record exact answers, avoid assumption
 - Notifications should use email and an approved WhatsApp provider.
 - GST invoicing is undecided; export to existing billing software is preferred if available.
 - Final branding and legal business details have not been provided.
+- Buyer and wholesaler-staff identities must be separate; buyer accounts cannot access the staff/admin portal.
 
 ## Ask the client
 
@@ -105,6 +106,7 @@ Add confirmed client answers here using this format:
 | Pending | Brand identity | Collect verified legal and public brand details | Continue using demo placeholders | Obtain logo and licence/contact details |
 | Pending | Hosting budget | Proposed Cloudflare Free + Supabase Free controlled pilot | No uptime SLA; strict quota and fallback controls required | Client must accept risk and upgrade triggers |
 | 15 October 2026 | Buyer GSTIN | GSTIN is optional; the drug-licence number remains required | Registration, database validation and staff review accept a missing GSTIN | Confirm whether non-GST buyers need invoice or ordering restrictions |
+| 19 October 2026 | Admin access | Medical-store buyer accounts must never access the staff/admin portal | Separate buyer and staff identities; enforce the boundary in database roles, policies and UI routing | Confirm named staff accounts and least-privilege roles before launch |
 
 ## Materials to request
 
