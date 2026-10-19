@@ -7,9 +7,13 @@
     "dev": "vite --host 0.0.0.0",
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "test": "vitest run src",
+    "test": "vitest run --dir src",
     "test:e2e": "playwright test",
     "test:db": "bash scripts/test-database.sh",
+    "test:local-db": "bash scripts/test-local-database.sh",
+    "test:local-stack": "bash scripts/test-local-stack.sh",
+    "test:server": "npm --prefix server test",
+    "build:server": "npm --prefix server run build",
     "deploy:cloudflare": "npm run build && wrangler deploy",
     "verify:cloudflare": "npm run build && wrangler deploy --dry-run"
   },
@@ -28,7 +32,7 @@
     "@vitejs/plugin-react": "^4.7.0",
     "typescript": "~5.9.2",
     "vite": "^7.1.7",
-    "vitest": "^3.2.4",
+    "vitest": "^5.0.5",
     "wrangler": "^4.45.0"
   },
   "overrides": {

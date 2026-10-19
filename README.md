@@ -1,8 +1,8 @@
 # Pedapalli Medical
 
-A mobile-first B2B pharmaceutical wholesale portal for verified medical stores. The preview includes gated wholesale pricing, optional GSTIN and required drug-licence application details, product-specific MOQ and order steps, wholesale cart and fulfilment choices, a buyer-review workspace, and CSV/XLSX inventory tools.
+A mobile-first B2B pharmaceutical wholesale portal for verified medical stores. The public site is a synthetic product preview. The repository also contains a self-hosted Node.js/PostgreSQL production candidate with separate buyer/staff identities, protected pricing, buyer review, quarantined batch receiving, pharmacist release, FEFO reservations, and idempotent ordering.
 
-Without Supabase environment variables, the site is a safe product preview and applications/orders are not transmitted. The selected ₹0 pilot architecture uses Cloudflare Workers Static Assets and Turnstile with Supabase Free for Postgres, Auth, RLS and Edge Functions. It supports email-link authentication, buyer approval, protected pricing, server-authoritative ordering, stock reservation, order transitions and buyer-isolated records. Follow [PRODUCTION.md](PRODUCTION.md) before activation.
+The current runtime uses repository code and PostgreSQL only; it does not depend on Supabase, Cloudflare, or another application API. Real checkout is disabled by default and the container frontend is not yet connected to the new API. Follow [the local runtime guide](docs/LOCAL_RUNTIME.md) and [PRODUCTION.md](PRODUCTION.md); do not use the GitHub Pages preview for real orders.
 
 ## GitHub Pages preview
 
@@ -17,15 +17,25 @@ npm install
 npm run dev
 ```
 
+For the isolated local stack:
+
+```sh
+export LOCAL_DB_PASSWORD="$(openssl rand -hex 24)"
+export LOCAL_API_PASSWORD="$(openssl rand -hex 24)"
+docker compose up --build -d
+```
+
 ## Verification
 
 ```sh
 npm test
 npm run build
+npm run test:server
+npm run test:local-db
+npm run test:local-stack
 npm run test:e2e
-npm run verify:cloudflare
 ```
 
-Production publishing is intentionally manual through the `Publish Cloudflare Free` GitHub Actions workflow. Required setup, free-tier limits and backup/restore instructions are in [PRODUCTION.md](PRODUCTION.md).
+The local-stack test creates and then removes a disposable database volume. Production activation requirements are in [PRODUCTION.md](PRODUCTION.md).
 
 The latest desktop/mobile buyer and staff review, before/after screenshots, completed fixes and remaining launch blockers are documented in [UX_AUDIT.md](UX_AUDIT.md).

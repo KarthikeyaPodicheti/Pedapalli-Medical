@@ -1,4 +1,43 @@
-# PRD implementation — phase 1: batch inventory foundation
+# PRD implementation status
+
+## Local authoritative runtime — 19 October 2026
+
+The repository now contains a new self-hosted Node.js/PostgreSQL foundation in
+`server/` and `compose.yaml`. It is independent of the older Supabase shadow
+ledger described below and follows the current local-only architecture decision.
+
+Implemented in this slice:
+
+- Separate password-authenticated buyer and staff account realms with HTTP-only,
+  same-site sessions, durable login/register rate limits and exact-origin checks.
+- Pending buyer application with optional GSTIN; wholesale prices and stock stay
+  hidden until staff approval.
+- Transactional, permission-checked buyer review with an audit record.
+- Additive/idempotent batch receipt into quarantine and pharmacist-only release.
+- Authoritative sellable stock, minimum shelf-life filtering and FEFO allocation.
+- Atomic full-cart reservation, idempotent order retry, concurrency protection,
+  and exactly-once cancellation/reservation-expiry release.
+- Least-privilege API database role, immutable migration hashes, hardened local
+  containers and same-origin Nginx proxying.
+- Disposable database and whole-stack integration tests. `npm run test:server`,
+  `npm run test:local-db`, and `npm run test:local-stack` pass locally.
+
+Final verification for this slice: `npm run build` passed; 11 frontend unit
+tests passed; the complete legacy PostgreSQL/RLS/concurrency suite passed; all
+8 desktop/mobile Playwright journeys passed; 3 server security tests passed;
+the new authoritative batch SQL and concurrent last-stock checks passed; the
+disposable container-stack registration/access/checkout-gate test passed; and
+both root and server `npm audit` reported zero known vulnerabilities. The build
+still reports the existing ExcelJS chunk-size warning; it is a performance item,
+not a failed release gate for this disabled-checkout foundation.
+
+This is not a production release. Checkout is disabled by default. The current
+container web image still serves the synthetic preview rather than a UI connected
+to this API. Staff MFA, controlled Excel import and reconciliation, workflow
+completion, backup/restore rehearsal, real client data, compliance acceptance and
+pilot sign-off remain launch blockers.
+
+## Earlier Supabase shadow-ledger history
 
 > **17 October workspace recovery:** this checkout was restored from remote
 > `main` (`f012bd5`). The previously reported local-only backend commit

@@ -1,0 +1,90 @@
+name: pedapalli-medical
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: medical
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${LOCAL_DB_PASSWORD:?Set LOCAL_DB_PASSWORD}
+    volumes:
+      - medical_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -h 127.0.0.1 -U postgres -d medical"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  migrate:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+      secrets:
+        - proxy_ca
+    image: pedapalli-medical-api:local
+    command: ["node","dist/migrate.js"]
+    environment:
+      MIGRATION_DATABASE_URL: postgres://postgres:${LOCAL_DB_PASSWORD}@db:5432/medical
+      LOCAL_API_PASSWORD: ${LOCAL_API_PASSWORD:?Set LOCAL_API_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    image: pedapalli-medical-api:local
+    environment:
+      DATABASE_URL: postgres://medical_api:${LOCAL_API_PASSWORD}@db:5432/medical
+      APP_ORIGIN: http://localhost:8080
+      HOST: 0.0.0.0
+      PORT: 3000
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD","node","-e","fetch('http://127.0.0.1:3000/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: server/frontend.Dockerfile
+      secrets:
+        - proxy_ca
+    image: pedapalli-medical-web:local
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8080:8080"
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx:size=16m,mode=0755
+      - /var/run:size=2m,mode=0755
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    restart: unless-stopped
+
+volumes:
+  medical_db:
+
+secrets:
+  proxy_ca:
+    file: ${CODEX_PROXY_CERT:-/etc/ssl/certs/ca-certificates.crt}

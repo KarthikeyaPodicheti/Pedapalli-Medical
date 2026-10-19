@@ -140,36 +140,37 @@ Preferred version-one option:
 
 If the client requires website-generated invoices, scope must expand to cover invoice sequences, supplier and buyer GST details, HSN and tax rates, intra/inter-state tax handling, rounding, PDFs, cancellations, credit/debit notes, immutable audit records, and accountant/legal validation. Do not implement or claim compliant GST invoicing until this decision and its rules are confirmed.
 
-## 7. Selected architecture — free-tier-first
+## 7. Selected architecture — self-hosted local runtime
 
-- **Frontend:** React, TypeScript, and Vite with mobile-first responsive design.
-- **Hosting and edge:** Cloudflare Workers Static Assets on the Workers Free plan, with Cloudflare DNS/SSL, security headers and a custom domain when the client approves it. GitHub Pages remains a temporary fallback, not the production target.
-- **Backend:** Supabase Free PostgreSQL, Auth, Row Level Security and Edge Functions. Preserve the tested PostgreSQL transaction, row-locking, idempotency and buyer-isolation model.
-- **Abuse protection:** Cloudflare Turnstile on email sign-in and buyer application submission. Buyer application writes pass through a JWT-protected Edge Function which verifies Turnstile before invoking a service-role-only database function.
-- **Files and backups:** Cloudflare R2 Free for licensed product images, controlled import/export files and encrypted off-site database dumps. Never store unencrypted database dumps in GitHub artifacts.
-- **Notifications:** use a transactional email provider's free allowance when available; WhatsApp may remain manual during the controlled pilot. Automated WhatsApp requires an approved external provider and is not assumed to be free.
-- **Environments:** one Free Supabase project may support the controlled pilot. Production separation becomes mandatory before a broader rollout or when the client funds paid operations.
-- **Observability:** lightweight uptime checks, Supabase quota monitoring, failed-notification checks, inventory-freshness checks and documented manual-order fallback.
+This supersedes the earlier free-tier Cloudflare/Supabase proposal. The current
+decision is to use repository code only, without an external application API.
 
-This choice optimizes for an Indian single-store client's starting budget. It does not claim that free plans provide an SLA. The operating safeguards and upgrade triggers below compensate for the free-tier limitations during a controlled launch.
+- **Frontend:** React, TypeScript and Vite; GitHub Pages remains a synthetic demo.
+- **Application:** a Node.js HTTP API behind same-origin Nginx, using HTTP-only
+  sessions, exact-origin mutation checks and server-side authorization.
+- **Database:** self-hosted PostgreSQL 17 with reviewed immutable migrations,
+  least-privilege runtime credentials, transactional business functions and a
+  persistent Docker volume.
+- **Deployment:** Docker Compose is the development and production-candidate
+  packaging baseline. Production still needs a client-controlled host, HTTPS,
+  separate staging, encrypted off-host backups, monitoring and tested recovery.
+- **Files/imports:** controlled local Excel/CSV import with checksum, preview,
+  atomic apply and reconciliation; do not mount arbitrary spreadsheets directly.
+- **Notifications:** manual operational fallback initially. Email or WhatsApp
+  automation remains blocked until the client approves a provider and budget.
 
-### Free-tier implementation phases
+### Local implementation phases
 
-1. **Cloudflare deployment foundation:** add Workers Static Assets configuration, SPA routing, security headers and a manual GitHub Actions deployment using least-privilege Cloudflare credentials.
-2. **Protected Supabase onboarding:** add Turnstile to email sign-in and buyer applications, validate tokens server-side, and remove direct authenticated execution of the buyer-application database function.
-3. **Recovery and quota safeguards:** create encrypted daily public/auth database dumps, upload them directly to a private R2 bucket, apply a 14-day lifecycle policy and document a restore drill.
-4. **Controlled pilot operations:** configure the real Free Supabase project, verified SMTP/free transactional allowance, staff MFA, real monitoring and manual phone/WhatsApp fallback; run controlled pilot orders with checkout disabled outside the test window.
-5. **Revenue-funded production decision:** upgrade only when an explicit trigger is reached, or migrate a separately tested backend later if measured usage makes that economically justified.
-
-### Upgrade triggers
-
-- PostgreSQL database size reaches 400 MB or file storage approaches 80% of its quota.
-- A pause, resource restriction, email limit or support limitation affects a real order.
-- The portal becomes a daily revenue-critical ordering channel without an acceptable manual fallback.
-- The buyer base, order rate, notification volume or operational staff exceeds the tested free-tier envelope.
-- The client requires an availability commitment, supported recovery objective, separate staging/production projects or formal vendor support.
-
-The current consumer-shaped schema must be migrated rather than switched on unchanged.
+1. **Runtime and inventory core:** local authentication, buyer approval, batch
+   quarantine/release, authoritative FEFO reservations and hardened containers.
+2. **Connected portal:** connect buyer and staff screens to the local API, add
+   staff MFA and complete role-specific navigation and denial states.
+3. **Controlled import/cutover:** validate the client Excel format, preview and
+   atomically import catalog/batches, reconcile opening stock, and record sign-off.
+4. **Operations:** implement assisted orders, picking/packing/dispatch, billing
+   export, payment references, returns, reports and notification history.
+5. **Hardening and pilot:** encrypted backup/restore rehearsal, monitoring,
+   security/accessibility tests, staff training and controlled buyer pilot.
 
 ### Core data model
 
@@ -297,9 +298,25 @@ Until these decisions and the production gates are complete, keep the existing d
 
 ### Free-tier deployment decision — 10 October 2026
 
+> Historical decision, superseded by the local-only runtime decision on
+> 19 October 2026. Keep these notes only as implementation history.
+
 - Selected Cloudflare Workers Static Assets Free plus Supabase Free for development and the controlled client pilot.
 - Production checkout remains gated by the same acceptance criteria; free hosting does not remove compliance, recovery, notification or operational requirements.
 - Implementation phases cover Cloudflare deployment, Turnstile-protected onboarding, encrypted R2 backups, quota monitoring and documented upgrade triggers.
 - Implemented in the repository: Workers Static Assets configuration and manual deploy workflow, security headers, Turnstile-protected Auth/application UI, JWT-protected application Edge Function, service-role-only verified database write, hourly health check, daily encrypted R2 backup, and the free-tier activation runbook.
 - Verification passed: unit tests, TypeScript/Vite production build, Cloudflare deployment dry-run, database/RLS/concurrency integration suite, Edge Function type-check, and desktop/mobile browser journeys.
 - External activation remains blocked on real Cloudflare/Supabase credentials, production SMTP, the client’s verified operating data, restore-drill evidence, controlled pilot and written launch approval.
+
+### Local runtime execution — 19 October 2026
+
+- Added the self-hosted Node.js/PostgreSQL container foundation and immutable
+  migration runner.
+- Added separate buyer/staff identities, pending buyer applications, protected
+  catalog data and transactional buyer review.
+- Made quarantined batches the inventory source of truth, with pharmacist
+  release, minimum shelf life, FEFO reservation, idempotency, concurrency
+  protection and exactly-once release.
+- Added disposable database and whole-stack tests; checkout remains disabled.
+- Next phase: connect the React buyer/staff experience to this API, then build
+  the controlled Excel import and opening-stock reconciliation workflow.

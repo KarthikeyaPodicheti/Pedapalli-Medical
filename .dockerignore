@@ -1,0 +1,12 @@
+.git
+.github
+node_modules
+server/node_modules
+dist
+server/dist
+playwright-report
+test-results
+docs/ux-audit
+*.log
+.env*
+!.env.example

@@ -23,8 +23,14 @@ runtime APIs**. Older Supabase/Cloudflare instructions elsewhere in this recover
 checkout are superseded by that decision. GSTIN stays optional; drug-licence
 details and manual business verification remain required.
 
-After foundation recovery, complete batch receiving/import/reconciliation,
-authoritative FEFO checkout, exactly-once cancellation/expiry, assisted orders,
+On 19 October 2026, the first independently verified replacement foundation was
+rebuilt in `server/` and `compose.yaml`: local password authentication, separate
+buyer/staff identities, transactional buyer review, quarantined batch receiving,
+pharmacist release, authoritative FEFO reservation, idempotent orders, and
+exactly-once cancellation/expiry release. This is new work, not recovery of the
+missing commit. The connected local frontend and staff MFA are still absent.
+
+Next complete controlled import/reconciliation, the connected local UI, assisted orders,
 picking/packing/dispatch, payment records, billing export, reporting and tested
 backup/restore. Keep real ordering disabled pending verified stock, operational
 acceptance and owner/compliance sign-off. Never fabricate client data.

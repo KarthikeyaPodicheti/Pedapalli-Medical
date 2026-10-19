@@ -104,7 +104,7 @@ Add confirmed client answers here using this format:
 | --- | --- | --- | --- | --- |
 | Pending | GST invoicing | Awaiting client billing-workflow review | Production launch remains blocked | Identify current billing software |
 | Pending | Brand identity | Collect verified legal and public brand details | Continue using demo placeholders | Obtain logo and licence/contact details |
-| Pending | Hosting budget | Proposed Cloudflare Free + Supabase Free controlled pilot | No uptime SLA; strict quota and fallback controls required | Client must accept risk and upgrade triggers |
+| 19 October 2026 | Runtime architecture | Build a self-hosted local Node.js/PostgreSQL runtime using repository code only; no external application API for now | Cloudflare/Supabase activation is superseded; production needs a client-controlled host, HTTPS, backups and monitoring | Confirm who owns the host, network, domain, backup destination and uptime response |
 | 15 October 2026 | Buyer GSTIN | GSTIN is optional; the drug-licence number remains required | Registration, database validation and staff review accept a missing GSTIN | Confirm whether non-GST buyers need invoice or ordering restrictions |
 | 19 October 2026 | Admin access | Medical-store buyer accounts must never access the staff/admin portal | Separate buyer and staff identities; enforce the boundary in database roles, policies and UI routing | Confirm named staff accounts and least-privilege roles before launch |
 
