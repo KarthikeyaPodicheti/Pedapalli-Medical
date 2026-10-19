@@ -58,3 +58,10 @@ The latest cleanup removed the unused hosted backend integration, obsolete deplo
 | `npm audit --audit-level=high` and `npm --prefix server audit --audit-level=high` | 0 each | No known vulnerabilities reported. |
 
 This evidence does not clear the production launch gates. Checkout remains disabled.
+
+The first GitHub run of the new local-stack CI job failed before compiling the
+containers: Docker Buildx blocked reading `/etc/ssl/certs/ca-certificates.crt`
+from outside the workflow checkout. The runner now copies the public CA bundle
+into its workspace and passes that path to the existing build secret. The other
+GitHub jobs (preview, server and local database) passed in that first run; the
+full-stack job must pass on the follow-up run before CI is considered green.

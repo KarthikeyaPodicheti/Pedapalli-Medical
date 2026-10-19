@@ -6,5 +6,5 @@ dist/
 *.tsbuildinfo
 playwright-report/
 test-results/
-supabase/.temp/
+.ci-proxy-ca.pem
 .DS_Store

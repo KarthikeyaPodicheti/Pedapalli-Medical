@@ -8,5 +8,6 @@ playwright-report
 test-results
 docs/ux-audit
 *.log
+.ci-proxy-ca.pem
 .env*
 !.env.example
