@@ -82,7 +82,7 @@ Required repository checks:
 ```sh
 npm run build
 npm test -- --run
-npm run test:db
+npm run test:local-db
 npm run test:e2e
 npm run test:server
 npm run test:local-db

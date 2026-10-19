@@ -142,8 +142,7 @@ If the client requires website-generated invoices, scope must expand to cover in
 
 ## 7. Selected architecture — self-hosted local runtime
 
-This supersedes the earlier free-tier Cloudflare/Supabase proposal. The current
-decision is to use repository code only, without an external application API.
+The current decision is to use repository code only, without an external application API.
 
 - **Frontend:** React, TypeScript and Vite; GitHub Pages remains a synthetic demo.
 - **Application:** a Node.js HTTP API behind same-origin Nginx, using HTTP-only
@@ -228,7 +227,7 @@ Automated coverage must include:
 
 - Unit tests for pricing, MOQ/step rules, imports, GST inputs once defined, and validation.
 - Database tests for RLS, role boundaries, buyer isolation, transitions, idempotency, reservation expiry, inventory release, and concurrent last-stock orders.
-- Edge Function integration tests for origin checks, rate limits, Turnstile, malformed payloads, and provider failures.
+- Local API integration tests for origin checks, rate limits, malformed payloads, and authorization failures.
 - End-to-end tests for registration, approval, sign-in, locked/unlocked catalog, wholesale cart, COD/bank-transfer order, status updates, inventory imports, and notifications.
 - Desktop and real-device mobile review with accessibility checks and no horizontal overflow.
 - Security review, production dependency audit, secret scan, and permission review.
@@ -282,31 +281,7 @@ Do not enable real B2B ordering until all of these are evidenced:
 
 Until these decisions and the production gates are complete, keep the existing deployment in explicit demo mode and do not accept real business orders or real buyer data.
 
-## 15. Implementation status — 9 October 2026
-
-- Completed in the repository: responsive B2B storefront; email-link buyer authentication; optional-GSTIN/required-drug-licence application; staff approval/suspension; price and stock redaction; pharmacist-approved catalog gating; wholesale units, case sizes, MOQ and steps; validated bulk import; server-authoritative COD/bank-transfer order requests; delivery/transporter/pickup selection; deterministic stock locking; idempotency; reservation expiry release; buyer-isolated RLS; staff transitions; and audit events.
-- Verified: TypeScript production build, unit tests, desktop/mobile browser tests, and both database migrations against PostgreSQL, including application, approval, order creation, idempotent retry, cancellation and exact stock release.
-- Not yet activated: staging/production Supabase projects, real client data, staff accounts/MFA, email/WhatsApp notifications, billing handoff, policies, monitoring/backups, custom domain, controlled pilot and client/compliance sign-off.
-- Activation procedure: follow `PRODUCTION.md`; keep `checkout_enabled=false` until every applicable production acceptance gate is evidenced.
-
-### Staging-readiness progress — 10 October 2026
-
-- Added a repeatable PostgreSQL integration suite and dedicated CI gate for migrations, RLS, buyer isolation, staff roles, price redaction, MOQ, idempotency, concurrent last-stock orders, reservation expiry and exact stock release.
-- Added the secure maintenance Edge Function and durable notification claiming/retry workflow for transactional email and approved WhatsApp templates.
-- Added a protected manual staging-deployment workflow for reviewed migrations and Edge Functions.
-- Next dependency: provision the staging Supabase project and provider sandboxes, then run the first controlled end-to-end staging order.
-
-### Free-tier deployment decision — 10 October 2026
-
-> Historical decision, superseded by the local-only runtime decision on
-> 19 October 2026. Keep these notes only as implementation history.
-
-- Selected Cloudflare Workers Static Assets Free plus Supabase Free for development and the controlled client pilot.
-- Production checkout remains gated by the same acceptance criteria; free hosting does not remove compliance, recovery, notification or operational requirements.
-- Implementation phases cover Cloudflare deployment, Turnstile-protected onboarding, encrypted R2 backups, quota monitoring and documented upgrade triggers.
-- Implemented in the repository: Workers Static Assets configuration and manual deploy workflow, security headers, Turnstile-protected Auth/application UI, JWT-protected application Edge Function, service-role-only verified database write, hourly health check, daily encrypted R2 backup, and the free-tier activation runbook.
-- Verification passed: unit tests, TypeScript/Vite production build, Cloudflare deployment dry-run, database/RLS/concurrency integration suite, Edge Function type-check, and desktop/mobile browser journeys.
-- External activation remains blocked on real Cloudflare/Supabase credentials, production SMTP, the client’s verified operating data, restore-drill evidence, controlled pilot and written launch approval.
+## 15. Current implementation status
 
 ### Local runtime execution — 19 October 2026
 
@@ -320,5 +295,8 @@ Until these decisions and the production gates are complete, keep the existing d
 - Added the connected React buyer/staff portal and staff TOTP MFA; checkout
   remains disabled.
 - Added disposable database, API, MFA and desktop/mobile whole-stack tests.
+- Retired the unused hosted-backend prototype, its deployment jobs and legacy
+  tests. The public site is now browser-only demo code; the connected local
+  runtime is the sole backend implementation.
 - Next phase: build the controlled Excel import and opening-stock reconciliation
   workflow.

@@ -104,7 +104,7 @@ Add confirmed client answers here using this format:
 | --- | --- | --- | --- | --- |
 | Pending | GST invoicing | Awaiting client billing-workflow review | Production launch remains blocked | Identify current billing software |
 | Pending | Brand identity | Collect verified legal and public brand details | Continue using demo placeholders | Obtain logo and licence/contact details |
-| 19 October 2026 | Runtime architecture | Build a self-hosted local Node.js/PostgreSQL runtime using repository code only; no external application API for now | Cloudflare/Supabase activation is superseded; production needs a client-controlled host, HTTPS, backups and monitoring | Confirm who owns the host, network, domain, backup destination and uptime response |
+| 19 October 2026 | Runtime architecture | Build a self-hosted local Node.js/PostgreSQL runtime using repository code only; no external application API for now | The earlier hosted proposal is retired; production needs a client-controlled host, HTTPS, backups and monitoring | Confirm who owns the host, network, domain, backup destination and uptime response |
 | 15 October 2026 | Buyer GSTIN | GSTIN is optional; the drug-licence number remains required | Registration, database validation and staff review accept a missing GSTIN | Confirm whether non-GST buyers need invoice or ordering restrictions |
 | 19 October 2026 | Admin access | Medical-store buyer accounts must never access the staff/admin portal | Separate buyer and staff identities; enforce the boundary in database roles, policies and UI routing | Confirm named staff accounts and least-privilege roles before launch |
 
@@ -126,8 +126,8 @@ Do not enable production ordering until legal identity, buyer verification, appr
 ## Engineering status — 9 October 2026
 
 - The repository now contains the authenticated B2B ordering foundation: buyer application/approval, protected catalog pricing, MOQ/step validation, atomic stock reservation, idempotency, reservation release, buyer-scoped records and staff order transitions.
-- Production remains intentionally disabled because no Supabase project/credentials or verified client operating data are available in the build environment.
-- The free-tier implementation adds Cloudflare deployment, Turnstile-protected applications and encrypted database backups to private R2; the client must still approve downtime, retention and manual-fallback ownership.
+- Production remains intentionally disabled because verified client operating data, stock reconciliation, workflow acceptance, and recovery evidence are still missing.
+- The client must approve hosting ownership, backup destination, retention, downtime tolerance, and manual-fallback ownership.
 - At the next client meeting, prioritize legal identity, catalog spreadsheet, delivery/payment rules, billing/GST handoff, staff assignments, policies and launch sign-off. Record answers above before activation.
 
 ## Next client meeting — priority discovery questions (2026-10-11)

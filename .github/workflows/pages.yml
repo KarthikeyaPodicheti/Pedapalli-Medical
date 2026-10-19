@@ -13,47 +13,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Check out feature comparison build
-        uses: actions/checkout@v5
-        with:
-          ref: feat/prd-batch-inventory-foundation
-          path: feature-source
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            feature-source/package-lock.json
-      - name: Install current version
+      - name: Install preview dependencies
         run: npm ci
-      - name: Test current version
+      - name: Test preview
         run: npm test
-      - name: Build current version
+      - name: Build preview
         run: npm run build
         env:
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
-          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
-          VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
-      - name: Install feature version
-        working-directory: feature-source
-        run: npm ci
-      - name: Test feature version
-        working-directory: feature-source
-        run: npm test
-      - name: Build feature version
-        working-directory: feature-source
-        run: npm run build
-        env:
-          VITE_BASE_PATH: /${{ github.event.repository.name }}/feature/
-          VITE_SUPABASE_URL: ''
-          VITE_SUPABASE_ANON_KEY: ''
-          VITE_TURNSTILE_SITE_KEY: ''
-      - name: Assemble side-by-side Pages artifact
-        run: |
-          mkdir -p dist/feature
-          cp -R feature-source/dist/. dist/feature/
       - uses: actions/configure-pages@v5
         with:
           enablement: true

@@ -1,7 +1,7 @@
 # Local production-candidate runtime
 
 This runtime uses only repository code, Node.js and PostgreSQL. It makes no
-Supabase, Cloudflare or other external API calls. The public GitHub Pages build
+external application API calls. The public GitHub Pages build
 remains a synthetic preview and is not this runtime.
 
 ## Start

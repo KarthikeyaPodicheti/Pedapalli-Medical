@@ -6,7 +6,7 @@
 **Location:** Peddapalli, Telangana, India  
 **Repository:** `KarthikeyaPodicheti/Pedapalli-Medical` (`main`)  
 **Status:** **Draft for client validation; NOT approved for production**  
-**Sources:** 30-round product discovery; project discussions; `clientMeeting.md`; `PRODUCTION.md`; `UX_AUDIT.md`; current `src/App.tsx`, `src/Admin.tsx`, `src/api.ts`, `src/types.ts`, `src/validation.ts`, and Supabase SQL migrations reviewed 11 October 2026.
+**Sources:** 30-round product discovery; project discussions; `clientMeeting.md`; `PRODUCTION.md`; `UX_AUDIT.md`; current `src/App.tsx`, `src/Admin.tsx`, `src/LocalPortal.tsx`, `src/types.ts`, `src/validation.ts`, and `server/sql/`.
 
 > **Decision provenance:** The user/developer selected a proposed design during discovery. These selections are not proof that the wholesaler has accepted the business process. The current code is not proof of runtime correctness. Each requirement below is marked **D** (discovery decision), **R** (existing repository behavior), **P** (proposed design elaboration), or **C** (client confirmation required). When a decision is both D and C, implement only after operational validation.
 
@@ -295,8 +295,8 @@ Define **base inventory unit** per SKU and explicit conversions for strip, box, 
 ## 11. Non-functional requirements
 
 ### 11.1 Security and privacy
-- Supabase Auth, row-level security, backend-authoritative checks, least-privilege staff roles and production MFA.
-- Turnstile on sign-in/application paths; verify sensitive requests server-side; keep service-role credentials out of browser/build variables.
+- Separate local buyer/staff authentication, backend-authoritative checks, least-privilege staff roles and production MFA.
+- Rate-limit sign-in/application paths; verify sensitive requests server-side; keep database credentials out of browser/build variables.
 - Separate buyer records and enforce business-scoped access at the database/API layer.
 - HTTPS, secure secrets management, controlled access to licences/contact data, logs without unnecessary sensitive content, and documented access revocation.
 - Preserve audit events for high-risk actions; retention periods and privacy notices require client/legal review.
@@ -311,13 +311,13 @@ Define **base inventory unit** per SKU and explicit conversions for strip, box, 
 ### 11.3 Performance and scalability
 - Pilot should work on typical Android phones and local mobile connections; exact performance SLOs, SKU count, store count and peak order volume require measurement.
 - Server-side search/pagination and indexes become necessary as real catalog grows.
-- Avoid promising uptime/SLA on the proposed free-tier architecture.
+- Do not promise an uptime SLA without monitored hosting and a named response owner.
 
 ### 11.4 Availability, backup, and disaster recovery
-- Current runbook proposes Cloudflare Free + Supabase Free, encrypted daily PostgreSQL/Auth backups to private R2, checksum verification and monthly restore rehearsal.
-- Named operations owner checks quotas, alerts and backup status; client must approve retention, recovery expectations, downtime tolerance and upgrade triggers.
+- The runbook requires encrypted daily PostgreSQL backups to a physically separate destination, checksum verification and monthly restore rehearsal.
+- A named operations owner checks alerts and backup status; the client must approve retention, recovery expectations, downtime tolerance and hosting upgrades.
 - Fallback during outages: staff phone/WhatsApp, controlled manual/Excel capture, later reconciliation; prevent duplicate orders after recovery.
-- Upgrade planning thresholds in existing runbook include 80% quota use and 400 MB/80% database capacity; verify current provider limits before production.
+- Set capacity and upgrade thresholds after the client host, expected SKU count and order volume are known.
 
 ### 11.5 Regulatory and financial controls
 - Wholesaler and buyer drug-licence verification, responsible pharmacist approval, restricted catalog rules, prescription-related evidence, expiry/recall handling, GST invoice numbering, tax treatment, returns/credit notes, and record retention require review by the client's qualified legal/compliance/accounting owners.
@@ -331,25 +331,19 @@ Define **base inventory unit** per SKU and explicit conversions for strip, box, 
 
 **Measurement design:** every order has source (`buyer_portal`, `staff_phone`, `staff_driver`, `counter`), created/confirmed timestamps, shortage reason/event, final status and actor. Do not equate a failed browser submission with an accepted order; define denominators before reporting.
 
-## 13. Current repository assessment (11 October 2026)
+## 13. Current repository assessment (19 October 2026)
 
-| Area | Existing evidence | Gap / action |
+| Area | Current evidence | Remaining gap |
 | --- | --- | --- |
-| Frontend | React 19, TypeScript, Vite; buyer catalog, cart, checkout, order history | Expand shortage/cancellation UX, staff-assisted entry, role-aware views |
-| Authentication | Supabase email-link buyer sign-in; staff login | Confirm production SMTP, MFA, role action gating |
-| Buyer verification | `buyer_businesses`, buyer review, protected catalog | Verification evidence/checklist, licence lifecycle, reasons |
-| Orders | `create_b2b_order` RPC validates, locks products, uses idempotency; `transition_order` manages basic statuses | Batch-aware reservation, expanded state machine, buyer cancellation, staff-assisted order API |
-| Inventory | Product-level `stock`, `upsert_inventory`, inventory event log, Excel/CSV import | Batch/expiry, quarantine, additive receipts, protected reservations and reconciliation |
-| Staff roles | DB roles `owner`, `sales`, `inventory`, `dispatch`, `pharmacist`, `staff` | UI currently largely authorizes staff membership; separate compliance approval permissions |
-| Fulfilment | Basic accepted/out-for-delivery/completed; own delivery/transporter/pickup options | Client-defined workflow, picking/packing, dispatch assignment, delivery records |
-| Notifications | Notification delivery/outbox history, maintenance workflow | Confirm provider, templates, buyer expiry/shortage messages |
-| Payments | COD and bank transfer options in current UI/config | Confirm credit/UPI reality, separate collection records, invoice handoff |
-| Testing | Vitest, Playwright, DB test scripts and deployment verification commands | Execute in configured staging; add batch/concurrency/expiry/returns/permissions tests |
-| Deployment | Cloudflare Workers, Supabase, Turnstile, R2 backup runbook | Accounts, credentials, real data, pilot sign-off; currently not production-approved |
+| Frontend | Browser-only GitHub Pages sample; connected buyer/staff portal in Docker | Complete operational workflows and mobile acceptance |
+| Authentication | Separate local buyer/staff password realms, HTTP-only sessions, staff TOTP MFA | Staff provisioning, recovery policy, production HTTPS and review |
+| Buyer verification | Pending applications, protected catalog, staff review | Client-approved licence evidence and reverification process |
+| Orders | Local transactional FEFO reservation, idempotency and exactly-once release | Checkout remains disabled pending verified data and workflow acceptance |
+| Inventory | Local batch ledger, quarantine and pharmacist release | Controlled Excel import, reconciliation and offline-sale capture |
+| Fulfilment and billing | Baseline order records and settings | Picking, dispatch, payment references and invoice handoff |
+| Operations | Local Docker deployment candidate | HTTPS, monitoring, encrypted off-host backups, restore drills and pilot sign-off |
 
-**Important technical mismatch:** current SQL `upsert_inventory` sets `products.stock = new_stock` and logs the difference. This is not the desired additive batch receipt process. Current order reservation decrements product-level `stock`, whereas the desired model needs physical/eligible/reserved distinctions and batch allocations. Migration must avoid double-subtracting previously reserved units.
-
-**Additional known UX audit gaps:** prescription verification permissions need redesign; inventory staff can currently change pharmacist approval; expired reservations do not yet notify buyers; role-aware navigation, payment references, transporter assignment, pick lists and POD are incomplete. The October 10 audit reported improvements to checkout totals, buyer sign-out, stock filter, mobile targets, checkout detail and dialog accessibility; those improvements still require regression testing after inventory changes.
+The public preview must never be mistaken for the connected runtime or used for real orders. See `docs/PRD_IMPLEMENTATION_STATUS.md` and `PRODUCTION.md` for implementation evidence and activation gates.
 
 ## 14. Implementation roadmap and dependencies
 
@@ -505,7 +499,7 @@ Define **base inventory unit** per SKU and explicit conversions for strip, box, 
 
 **Done for a feature:** backend enforcement, unit/integration tests, permission tests, mobile UX, accessible errors, audit events, documentation, migration/rollback plan and staging verification complete.
 
-**Production launch gate:** legal identity/policies verified; eligible catalog and buyer checks approved; stock reconciled; batch/expiry and recall responsibilities assigned; payment/delivery/invoicing process signed off; staff trained; atomic reservation/cancellation/expiry tested; MFA/RLS/Turnstile verified; notification provider tested; encrypted backup restored; pilot accepted; owner/compliance sign-off documented. Until then, **checkout remains disabled**.
+**Production launch gate:** legal identity/policies verified; eligible catalog and buyer checks approved; stock reconciled; batch/expiry and recall responsibilities assigned; payment/delivery/invoicing process signed off; staff trained; atomic reservation/cancellation/expiry tested; staff MFA, authorization and rate limits verified; notification process tested; encrypted backup restored; pilot accepted; owner/compliance sign-off documented. Until then, **checkout remains disabled**.
 
 ## 20. References and document control
 
@@ -513,7 +507,7 @@ Define **base inventory unit** per SKU and explicit conversions for strip, box, 
 - Client interview checklist: `clientMeeting.md` (updated 11 October 2026)
 - Production runbook: `PRODUCTION.md`
 - UX review and known launch blockers: `UX_AUDIT.md` (10 October 2026)
-- Source files reviewed: `src/App.tsx`, `src/Admin.tsx`, `src/api.ts`, `src/types.ts`, `src/validation.ts`, `supabase/migrations/202610090001_b2b_foundation.sql`
+- Source files reviewed: `src/App.tsx`, `src/Admin.tsx`, `src/LocalPortal.tsx`, `src/types.ts`, `src/validation.ts`, `server/sql/001_core.sql`
 - This document is a **product specification**, not a legal/compliance certification, signed statement of work, implementation guarantee, or approval to activate live pharmaceutical ordering.
 
 **Next revision trigger:** update to v1.1 after the distributor walkthrough and collection of a representative inventory Excel file and invoice. Convert all relevant `C` items to recorded decisions, then finalize data model and acceptance tests.

@@ -19,8 +19,7 @@ or current test evidence. Restore the actual commit if a copy exists; otherwise
 reimplement and independently verify these features before integrating orders.
 
 The user's current architecture decision remains **local code only, no external
-runtime APIs**. Older Supabase/Cloudflare instructions elsewhere in this recovered
-checkout are superseded by that decision. GSTIN stays optional; drug-licence
+runtime APIs**. Earlier hosted-backend instructions were retired. GSTIN stays optional; drug-licence
 details and manual business verification remain required.
 
 On 19 October 2026, the first independently verified replacement foundation was
@@ -41,7 +40,7 @@ acceptance and owner/compliance sign-off. Never fabricate client data.
 - `npm ci`: exit 0.
 - `npm run build`: exit 0 (bundle-size warning).
 - `npm test -- --run`: exit 0; 11 tests passed.
-- `npm run test:db`: exit 0; SQL suites and concurrent last-stock test passed.
+- The earlier SQL suite and concurrent last-stock test passed before the hosted prototype was retired; use `npm run test:local-db` for the current runtime.
 - `npm run test:e2e`: initially blocked by missing Playwright Chromium executable.
 - `npx playwright install --with-deps chromium`: exit 1; the environment cannot
   authenticate `su` to install system packages.

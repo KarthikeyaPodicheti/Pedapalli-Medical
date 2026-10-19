@@ -9,17 +9,13 @@
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run --dir src",
     "test:e2e": "playwright test",
-    "test:db": "bash scripts/test-database.sh",
     "test:local-db": "bash scripts/test-local-database.sh",
     "test:local-stack": "bash scripts/test-local-stack.sh",
     "test:server": "npm --prefix server test",
-    "build:server": "npm --prefix server run build",
-    "deploy:cloudflare": "npm run build && wrangler deploy",
-    "verify:cloudflare": "npm run build && wrangler deploy --dry-run"
+    "build:server": "npm --prefix server run build"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
-    "@supabase/supabase-js": "^2.57.4",
     "exceljs": "^4.4.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
@@ -32,8 +28,7 @@
     "@vitejs/plugin-react": "^4.7.0",
     "typescript": "~5.9.2",
     "vite": "^7.1.7",
-    "vitest": "^5.0.5",
-    "wrangler": "^4.45.0"
+    "vitest": "^5.0.5"
   },
   "overrides": {
     "exceljs": {
