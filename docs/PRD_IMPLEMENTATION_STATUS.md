@@ -64,4 +64,35 @@ containers: Docker Buildx blocked reading `/etc/ssl/certs/ca-certificates.crt`
 from outside the workflow checkout. The runner now copies the public CA bundle
 into its workspace and passes that path to the existing build secret. The other
 GitHub jobs (preview, server and local database) passed in that first run; the
-full-stack job must pass on the follow-up run before CI is considered green.
+full-stack job passed in follow-up run 39272347570.
+
+## Production security increment — 19 October 2026
+
+Closed an MFA enrollment authorization gap: a password-only session created
+before MFA enrollment could previously call verify-setup after enrollment and
+become MFA-verified without supplying a code. Already-enabled enrollment now
+returns 409 and leaves that session unverified. Staff catalog prices and stock
+also require verified MFA. Setup uses an atomic conditional upsert so concurrent
+requests cannot overwrite the pending secret or retrieve an already-enabled
+secret through that query. Setup and verification have per-account rate limits.
+
+Added API regression checks for pre-MFA catalog denial, buyer/staff isolation,
+stale-session enrollment rejection, continued staff denial, enabled setup
+rejection and HTTP 429 after the enrollment attempt limit. Existing successful
+enrollment and subsequent MFA login checks still pass.
+
+| Command | Exit | Result |
+| --- | --- | --- |
+| `npm run build` | 0 | Passed; existing ExcelJS chunk-size and mixed-import warnings remain. |
+| `npm test -- --run` | 0 | 11 tests passed. |
+| `npm run test:server` | 0 | 5 tests passed. |
+| `npm run test:local-db` | 0 | Batch ledger and concurrent last-stock checks passed. |
+| `npm run test:e2e` | 0 | 8 desktop/mobile demo journeys passed. |
+| `npm run test:local-stack` | 0 | New authorization/rate-limit checks and 2 connected browser journeys passed. |
+| `git diff --check` | 0 | No whitespace errors. |
+
+No failing assertions or environment blockers occurred in these runs. This is
+one security increment, not completion of the security phase or a production
+release. Login abuse controls, recovery/session lifecycle review, controlled
+imports and the remaining production roadmap still require implementation and
+acceptance. Checkout remains disabled; no production data or settings changed.

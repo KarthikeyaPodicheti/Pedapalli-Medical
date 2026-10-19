@@ -2,6 +2,40 @@
 
 ## 1. Product goal
 
+### Production delivery sequence — 19 October 2026
+
+The release target is a sellable production product. Complete these phases in
+order, with test evidence and remaining client decisions recorded at each gate.
+Existing foundations are implemented; none of the following gates is yet complete.
+
+1. **Security baseline (in progress):** close staff MFA enrollment gaps, test
+   buyer/staff isolation and authorization, harden login abuse protection and
+   recovery. Gate: negative API tests and session lifecycle review pass.
+2. **Controlled inventory:** versioned CSV/XLSX template, validation and preview,
+   atomic apply, conflict detection, import audit, batch quarantine and opening
+   stock reconciliation. Gate: invalid/repeated/concurrent imports cannot corrupt
+   quantities; client spreadsheet mapping and opening balances are signed off.
+3. **Daily operations:** confirmation, picking, packing, dispatch, pickup,
+   cancellation, reservation expiry and inspected returns. Gate: each transition
+   has authorization, audit evidence and exactly-once stock effects.
+4. **Billing and payments:** export confirmed orders to existing billing,
+   record invoice references and verified COD/bank-transfer payments, provide
+   reconciliation reports. Gate: client-approved billing handoff works end to end.
+5. **Production experience:** complete connected buyer/staff journeys, search,
+   accessibility, mobile layouts and clear error/recovery states. Gate: realistic
+   desktop/mobile acceptance tests pass without relying on demo data or storage.
+6. **Deployment and recovery:** separate staging/production, HTTPS, secrets,
+   health checks, monitoring, encrypted off-host backups and rollback runbooks.
+   Gate: clean deployment and restore drill meet agreed recovery targets.
+7. **Client acceptance and handover:** verified business/catalog data, policies,
+   staff training, buyer pilot, maintenance ownership and launch sign-off.
+   Gate: all launch criteria in PRODUCTION.md evidenced before checkout activation.
+
+External application APIs remain deferred. Use in-app status and documented manual
+notification procedures until the client authorizes a provider; older email and
+WhatsApp requirements below describe future automation, not a current dependency.
+GitHub Pages remains a synthetic demonstration, not the production backend host.
+
 Build a production-ready B2B ordering portal for one pharmaceutical wholesaler in Peddapalli, Telangana. Approved medical stores will use it to browse a verified wholesale catalog, check availability, order in valid wholesale quantities, choose an offline payment method, and track fulfilment.
 
 This is a B2B-first product. Individual consumers, consumer prescriptions, retail checkout, and B2C delivery are explicitly deferred to a later phase. The current deployed storefront is a demonstration and must remain clearly labelled as such until every launch gate in this plan is satisfied.
@@ -298,5 +332,5 @@ Until these decisions and the production gates are complete, keep the existing d
 - Retired the unused hosted-backend prototype, its deployment jobs and legacy
   tests. The public site is now browser-only demo code; the connected local
   runtime is the sole backend implementation.
-- Next phase: build the controlled Excel import and opening-stock reconciliation
-  workflow.
+- Current phase: harden staff MFA enrollment and authorization with regression
+  coverage, then build controlled Excel import and opening-stock reconciliation.

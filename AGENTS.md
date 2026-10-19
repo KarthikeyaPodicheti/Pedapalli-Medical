@@ -12,6 +12,13 @@ Pay particular attention to: receipt idempotency, concurrent last-stock orders, 
 
 Use any stock images and i need you to start using phosphor icons
 
+Follow the production delivery sequence in `plan.md`: security, controlled
+inventory, daily operations, billing/payments, production UX, deployment/recovery,
+then client acceptance. The target is a sellable production release. Record test
+evidence and unresolved launch gates; do not equate a successful build with
+production readiness. Under the current no-external-API decision, notifications
+use in-app status and a documented manual process; provider automation is deferred.
+
 # Project brief
 
 Build a production-ready, sellable B2B pharmaceutical wholesale portal for one medicine wholesaler in Peddapalli, Telangana. The first customers are medical-store businesses—not individual consumers. B2C is a separate future phase and must not shape or weaken the first B2B release.

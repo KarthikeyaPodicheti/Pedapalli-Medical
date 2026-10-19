@@ -20,6 +20,17 @@ Use this document during client meetings. Record exact answers, avoid assumption
 
 ## Ask the client
 
+### Production sale and handover
+
+- [ ] Who pays for and owns the production host, domain and off-host backup storage?
+- [ ] Agree recovery targets: maximum acceptable data loss and restoration time.
+- [ ] Who handles incidents, security updates, staff account recovery and ongoing maintenance?
+- [ ] Agree acceptance scenarios, pilot participants, support hours and handover owner.
+- [ ] Confirm manual notification procedures while external application APIs remain deferred.
+
+The user confirmed the target is a sellable production product, not an MVP.
+These operational details still require client answers; do not invent commitments.
+
 ### Business and branding
 
 - [ ] Exact legal business name and trading name?

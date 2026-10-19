@@ -59,12 +59,31 @@ request 200 "$results_dir/staff-login.json" -c "$results_dir/staff-cookies.txt" 
   -H 'Origin: http://localhost:8080' -H 'Content-Type: application/json' \
   --data '{"email":"owner@example.in","password":"Synthetic owner password 2026!"}'
 if ! grep -q '"mfaSetupRequired":true' "$results_dir/staff-login.json";then echo 'New staff account did not require MFA setup' >&2;exit 1;fi
+request 200 "$results_dir/stale-login.json" -c "$results_dir/stale-cookies.txt" -X POST http://127.0.0.1:8080/api/auth/login \
+  -H 'Origin: http://localhost:8080' -H 'Content-Type: application/json' \
+  --data '{"email":"owner@example.in","password":"Synthetic owner password 2026!"}'
+request 200 "$results_dir/unverified-catalog.json" -b "$results_dir/stale-cookies.txt" http://127.0.0.1:8080/api/catalog
+if ! grep -q '"canTrade":false' "$results_dir/unverified-catalog.json";then echo 'Unverified staff gained catalog access' >&2;exit 1;fi
+request 403 "$results_dir/unverified-buyers.json" -b "$results_dir/stale-cookies.txt" http://127.0.0.1:8080/api/staff/buyers
+request 403 "$results_dir/buyer-staff-denied.json" -b "$results_dir/cookies.txt" http://127.0.0.1:8080/api/staff/buyers
 request 200 "$results_dir/mfa-setup.json" -b "$results_dir/staff-cookies.txt" -X POST http://127.0.0.1:8080/api/staff/mfa/setup \
   -H 'Origin: http://localhost:8080' -H 'Content-Type: application/json' --data '{}'
 mfa_code="$(node server/tests/totp-code.mjs < "$results_dir/mfa-setup.json")"
 request 200 "$results_dir/mfa-verify.json" -b "$results_dir/staff-cookies.txt" -X POST http://127.0.0.1:8080/api/staff/mfa/verify-setup \
   -H 'Origin: http://localhost:8080' -H 'Content-Type: application/json' --data "{\"code\":\"$mfa_code\"}"
 request 200 "$results_dir/staff-buyers.json" -b "$results_dir/staff-cookies.txt" http://127.0.0.1:8080/api/staff/buyers
+request 409 "$results_dir/stale-mfa-denied.json" -b "$results_dir/stale-cookies.txt" -X POST http://127.0.0.1:8080/api/staff/mfa/verify-setup \
+  -H 'Origin: http://localhost:8080' -H 'Content-Type: application/json' --data '{}'
+request 403 "$results_dir/stale-staff-denied.json" -b "$results_dir/stale-cookies.txt" http://127.0.0.1:8080/api/staff/buyers
+request 409 "$results_dir/enabled-setup-denied.json" -b "$results_dir/stale-cookies.txt" -X POST http://127.0.0.1:8080/api/staff/mfa/setup \
+  -H 'Origin: http://localhost:8080' -H 'Content-Type: application/json' --data '{}'
+# Successful enrollment and the stale-session attempt consumed two of ten attempts.
+for attempt in {3..10}; do
+  request 409 "$results_dir/repeat-enrollment-$attempt.json" -b "$results_dir/stale-cookies.txt" -X POST http://127.0.0.1:8080/api/staff/mfa/verify-setup \
+    -H 'Origin: http://localhost:8080' -H 'Content-Type: application/json' --data '{}'
+done
+request 429 "$results_dir/enrollment-rate-limit.json" -b "$results_dir/stale-cookies.txt" -X POST http://127.0.0.1:8080/api/staff/mfa/verify-setup \
+  -H 'Origin: http://localhost:8080' -H 'Content-Type: application/json' --data '{}'
 request 200 "$results_dir/staff-logout.json" -b "$results_dir/staff-cookies.txt" -X POST http://127.0.0.1:8080/api/auth/logout \
   -H 'Origin: http://localhost:8080' -H 'Content-Type: application/json' --data '{}'
 request 200 "$results_dir/mfa-required.json" -X POST http://127.0.0.1:8080/api/auth/login \

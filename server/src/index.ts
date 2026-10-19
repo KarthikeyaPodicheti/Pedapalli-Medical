@@ -100,20 +100,26 @@ async function route(req:IncomingMessage,res:ServerResponse){
   }
   if(req.method==='POST'&&url.pathname==='/api/staff/mfa/setup'){
     const saved=await requireSession(req);if(saved.accountType!=='staff')throw new HttpError(403,'Staff account required.');if(saved.mfaEnabled)throw new HttpError(409,'MFA is already enabled.')
-    const existing=await pool.query<{encrypted_secret:string}>('select encrypted_secret from private.staff_mfa where user_id=$1',[saved.id])
-    const secret=existing.rows[0]?decryptMfaSecret(existing.rows[0].encrypted_secret,mfaKey):createMfaSecret()
-    if(!existing.rowCount)await pool.query(`insert into private.staff_mfa(user_id,encrypted_secret) values($1,$2)`,[saved.id,encryptMfaSecret(secret,mfaKey)])
+    await consumeRateLimit(`mfa-setup:${saved.id}`)
+    const existing=await pool.query<{encrypted_secret:string}>(`insert into private.staff_mfa(user_id,encrypted_secret) values($1,$2)
+      on conflict(user_id) do update set encrypted_secret=private.staff_mfa.encrypted_secret
+      where not private.staff_mfa.enabled returning encrypted_secret`,[saved.id,encryptMfaSecret(createMfaSecret(),mfaKey)])
+    if(!existing.rowCount)throw new HttpError(409,'MFA is already enabled.')
+    const secret=decryptMfaSecret(existing.rows[0].encrypted_secret,mfaKey)
     const label=encodeURIComponent(`Pedapalli Medical:${saved.email}`),issuer=encodeURIComponent('Pedapalli Medical')
     json(res,200,{manualKey:secret,otpauthUri:`otpauth://totp/${label}?secret=${secret}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`});return
   }
   if(req.method==='POST'&&url.pathname==='/api/staff/mfa/verify-setup'){
     const saved=await requireSession(req);if(saved.accountType!=='staff')throw new HttpError(403,'Staff account required.')
-    const data=await body(req),code=String(data.code??'').trim(),token=cookies(req)[sessionCookie],client=await pool.connect()
+    const data=await body(req),code=String(data.code??'').trim(),token=cookies(req)[sessionCookie]
+    await consumeRateLimit(`mfa-enrollment:${saved.id}`)
+    const client=await pool.connect()
     try{
       await client.query('begin')
       const record=await client.query<{encrypted_secret:string;enabled:boolean}>('select encrypted_secret,enabled from private.staff_mfa where user_id=$1 for update',[saved.id])
       if(!record.rowCount)throw new HttpError(409,'Start MFA setup first.')
-      if(!record.rows[0].enabled&&!verifyTotp(decryptMfaSecret(record.rows[0].encrypted_secret,mfaKey),code))throw new HttpError(400,'The security code is invalid or expired.')
+      if(record.rows[0].enabled)throw new HttpError(409,'MFA is already enabled. Sign in with your security code.')
+      if(!verifyTotp(decryptMfaSecret(record.rows[0].encrypted_secret,mfaKey),code))throw new HttpError(400,'The security code is invalid or expired.')
       await client.query('select public.enable_staff_mfa($1)',[saved.id])
       await client.query('update private.sessions set mfa_verified=true where token_hash=$1 and user_id=$2',[digestToken(token),saved.id])
       await client.query('commit')
@@ -121,7 +127,7 @@ async function route(req:IncomingMessage,res:ServerResponse){
     json(res,200,{ok:true});return
   }
   if(req.method==='GET'&&url.pathname==='/api/catalog'){
-    const saved=await session(req),canTrade=saved?.accountType==='staff'||saved?.buyerStatus==='approved'
+    const saved=await session(req),canTrade=(saved?.accountType==='staff'&&saved.mfaVerified)||saved?.buyerStatus==='approved'
     const [result,settings]=await Promise.all([pool.query(`select p.id,p.sku,p.name,p.composition,p.strength,p.pack_size,p.manufacturer,p.category,
       p.wholesale_unit,p.units_per_case,p.minimum_order_quantity,p.quantity_step,p.mrp_paise,p.price_paise,
       p.regulatory_class,p.prescription_required,i.sellable_quantity from public.products p
