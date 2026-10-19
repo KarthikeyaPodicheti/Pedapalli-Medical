@@ -1,5 +1,13 @@
 # PRD implementation — phase 1: batch inventory foundation
 
+> **17 October workspace recovery:** this checkout was restored from remote
+> `main` (`f012bd5`). The previously reported local-only backend commit
+> `a455926` is unavailable here and on GitHub. Its implementation and earlier
+> verification must not be treated as present in this checkout. See
+> [WORKSPACE_RECOVERY.md](WORKSPACE_RECOVERY.md) for recovery scope and current
+> baseline test results. The user's local-only architecture supersedes the
+> older hosted-infrastructure references below.
+
 `main` now includes the first shadow-ledger increment for PRD FR-021, FR-023, FR-024, FR-025 and FR-027, plus buyer cancellation and a staff batch-alert view. It does **not** implement the full PRD.
 
 ## Implemented
