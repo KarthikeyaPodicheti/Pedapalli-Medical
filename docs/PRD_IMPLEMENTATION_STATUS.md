@@ -58,6 +58,10 @@ Added migrations `202610110003_receipt_idempotency.sql`, `202610110004_buyer_pen
   `staff_members`. Staff helper functions also deny privileges to a buyer
   identity, providing defense in depth for every existing RLS policy and RPC.
 - Valid staff accounts retain access through individually assigned roles.
+- The static GitHub Pages build now uses explicit public demo credentials for
+  synthetic staff data. An active buyer must sign out before the staff login is
+  shown. These credentials are deliberately not presented as production
+  authentication; configured deployments still require backend password checks.
 - Verification: `npm run build` (exit 0), `npm test -- --run` (exit 0; 11
   tests), `npm run test:db` (exit 0, including buyer/staff separation and
   concurrent last-stock checks), and `npm run test:e2e` (exit 0; 8 desktop and
@@ -65,3 +69,6 @@ Added migrations `202610110003_receipt_idempotency.sql`, `202610110004_buyer_pen
   assertion directly referenced the private `auth` schema as `authenticated`;
   the assertion was corrected to use the RLS-visible row count and the full
   suite then passed.
+- After adding the separate staff-demo login, all four commands were rerun and
+  passed again: build, 11 unit tests, the full database suite, and 8 desktop/
+  mobile browser tests.

@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test'
 
+async function signInToStaffDemo(page:import('@playwright/test').Page){
+  await page.getByLabel('Username').fill('staff-demo')
+  await page.getByLabel('Password').fill('Peddapalli-Staff-Demo-2026')
+  await page.getByRole('button',{name:'Sign in to staff demo'}).click()
+}
+
 test.beforeEach(async ({ page }) => {
   await page.goto('/')
   await page.evaluate(() => localStorage.clear())
@@ -15,7 +21,8 @@ test('verified buyer can create a valid wholesale demo order',async({page})=>{
   await expect(page.getByRole('link',{name:'Staff portal'})).toHaveCount(0)
   await page.goto('/#admin')
   await expect(page.getByRole('heading',{name:'Buyer accounts cannot access the staff portal'})).toBeVisible()
-  await expect(page.getByRole('button',{name:'Explore admin preview'})).toHaveCount(0)
+  await expect(page.getByRole('button',{name:'Sign out buyer and continue to staff login'})).toBeVisible()
+  await expect(page.getByLabel('Username')).toHaveCount(0)
   await page.getByRole('link',{name:'Return to buyer store'}).first().click()
   await page.getByRole('searchbox').fill('paracetamol')
   await expect(page.locator('.product-card')).toHaveCount(1)
@@ -63,7 +70,8 @@ test('buyer application stays a local preview and staff can review buyers',async
   await expect(page.getByRole('dialog')).toContainText('This demo application has not been sent anywhere')
   await page.getByRole('button',{name:'Start over'}).click()
   await page.goto('/#admin')
-  await page.getByRole('button',{name:'Explore admin preview'}).click()
+  await expect(page.getByText('Peddapalli-Staff-Demo-2026')).toBeVisible()
+  await signInToStaffDemo(page)
   await page.getByRole('button',{name:'Buyers'}).click()
   await expect(page.getByText('Lakshmi Medical Agencies')).toBeVisible()
   await page.getByRole('button',{name:'Batch alerts'}).click()
@@ -74,7 +82,11 @@ test('buyer application stays a local preview and staff can review buyers',async
 
 test('staff preview edits inventory and validates bulk CSV before saving',async({page})=>{
   await page.goto('/#admin')
-  await page.getByRole('button',{name:'Explore admin preview'}).click()
+  await page.getByLabel('Username').fill('wrong-user')
+  await page.getByLabel('Password').fill('wrong-password')
+  await page.getByRole('button',{name:'Sign in to staff demo'}).click()
+  await expect(page.getByRole('alert')).toHaveText('Incorrect demo username or password.')
+  await signInToStaffDemo(page)
   await page.getByRole('button',{name:'Edit Paracetamol',exact:true}).click()
   let dialog=page.getByRole('dialog')
   await dialog.getByLabel('Wholesale price').fill('32.50')

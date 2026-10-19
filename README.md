@@ -8,6 +8,8 @@ Without Supabase environment variables, the site is a safe product preview and a
 
 [Open the live preview](https://karthikeyapodicheti.github.io/Pedapalli-Medical/). The [feature comparison preview](https://karthikeyapodicheti.github.io/Pedapalli-Medical/feature/) is also available when the Pages comparison workflow has been deployed.
 
+Staff demo: open [the staff portal](https://karthikeyapodicheti.github.io/Pedapalli-Medical/#admin) and use username `staff-demo` with password `Peddapalli-Staff-Demo-2026`. If a buyer demo is active, choose **Sign out buyer and continue to staff login** first. These public credentials unlock synthetic preview data only; they are not production authentication.
+
 ## Local development
 
 ```sh
